@@ -1,0 +1,181 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\arquitectura_app.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\arquitectura_app.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\core.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\core.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\README.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\README.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\arquitectura_gral.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\arquitectura_gral.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\logging.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\logging.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\gui.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\gui.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\db.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:docs\\db.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\app_lifecycle.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:src\\app_lifecycle.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\main.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:src\\main.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\VERSION||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{36018322-05DE-4CD5-AA3E-2472EE6E7BCC}|ControladoRF V1.pyproj|solutionrelative:src\\VERSION||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "arquitectura_app.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\arquitectura_APP.md",
+              "RelativeDocumentMoniker": "docs\\arquitectura_APP.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\arquitectura_APP.md",
+              "RelativeToolTip": "docs\\arquitectura_APP.md",
+              "ViewState": "AgIAAIMAAAAAAAAAAAAAAJkAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:16:31.405Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "README.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\README.md",
+              "RelativeDocumentMoniker": "docs\\README.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\README.md",
+              "RelativeToolTip": "docs\\README.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:14:11.536Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "logging.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\logging.md",
+              "RelativeDocumentMoniker": "docs\\logging.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\logging.md",
+              "RelativeToolTip": "docs\\logging.md",
+              "ViewState": "AgIAADMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:13:54.557Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "gui.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\gui.md",
+              "RelativeDocumentMoniker": "docs\\gui.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\gui.md",
+              "RelativeToolTip": "docs\\gui.md",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:13:28.469Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "db.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\db.md",
+              "RelativeDocumentMoniker": "docs\\db.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\db.md",
+              "RelativeToolTip": "docs\\db.md",
+              "ViewState": "AgIAAEsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:13:15.348Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "core.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\core.md",
+              "RelativeDocumentMoniker": "docs\\core.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\core.md",
+              "RelativeToolTip": "docs\\core.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:12:59.782Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "arquitectura_gral.md",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\arquitectura_gral.md",
+              "RelativeDocumentMoniker": "docs\\arquitectura_gral.md",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\docs\\arquitectura_gral.md",
+              "RelativeToolTip": "docs\\arquitectura_gral.md",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAHgAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2026-06-11T18:08:29.445Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "app_lifecycle.py",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\app_lifecycle.py",
+              "RelativeDocumentMoniker": "src\\app_lifecycle.py",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\app_lifecycle.py",
+              "RelativeToolTip": "src\\app_lifecycle.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-06-11T18:03:26.35Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "main.py",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\main.py",
+              "RelativeDocumentMoniker": "src\\main.py",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\main.py",
+              "RelativeToolTip": "src\\main.py",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2026-06-11T18:03:18.506Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "VERSION",
+              "DocumentMoniker": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\VERSION",
+              "RelativeDocumentMoniker": "src\\VERSION",
+              "ToolTip": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\ControladoRF V1\\src\\VERSION",
+              "RelativeToolTip": "src\\VERSION",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2026-06-11T18:03:13.533Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

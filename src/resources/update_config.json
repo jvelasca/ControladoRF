@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "github_owner": "jvelasca",
+  "github_repo": "ControladoRF",
+  "asset_suffixes": ["-Setup.exe", "-w11.zip"],
+  "asset_suffix": "-Setup.exe",
+  "check_on_startup": true,
+  "check_interval_hours": 24
+}

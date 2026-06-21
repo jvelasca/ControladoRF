@@ -1,0 +1,1901 @@
+{
+  "started_at": "2026-06-19T16:25:37.300609+00:00",
+  "finished_at": "2026-06-19T16:25:37.333940+00:00",
+  "duration_sec": 0.03333180000004177,
+  "total": 27,
+  "passed": 27,
+  "failed": 0,
+  "ok": true,
+  "results": [
+    {
+      "scenario_id": "span_1m",
+      "label": "SPAN 1.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 2000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 1953.125,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=2.000 MHz span=2.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=2.000 MHz span=2.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=1953.1 Hz derived=1953.1 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=2000000.0 params_rate=2000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_2m",
+      "label": "SPAN 2.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 2000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 1953.125,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=2.000 MHz span=2.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=2.000 MHz span=2.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=1953.1 Hz derived=1953.1 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=2000000.0 params_rate=2000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_5m",
+      "label": "SPAN 5.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 5000000.0,
+      "sample_rate_hz": 5000000.0,
+      "rbw_hz": 4882.8125,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=5.000 MHz span=5.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=5.000 MHz span=5.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=4882.8 Hz derived=4882.8 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=5000000.0 params_rate=5000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_10m",
+      "label": "SPAN 10.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 10000000.0,
+      "sample_rate_hz": 10000000.0,
+      "rbw_hz": 9765.625,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=9765.6 Hz derived=9765.6 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=10000000.0 params_rate=10000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_15m",
+      "label": "SPAN 15.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 15000000.0,
+      "sample_rate_hz": 15000000.0,
+      "rbw_hz": 14648.4375,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=15.000 MHz span=15.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=15.000 MHz span=15.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=14648.4 Hz derived=14648.4 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=15000000.0 params_rate=15000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_18m",
+      "label": "SPAN 18.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 18000000.0,
+      "sample_rate_hz": 18000000.0,
+      "rbw_hz": 17578.125,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=18.000 MHz span=18.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=18.000 MHz span=18.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=17578.1 Hz derived=17578.1 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=18000000.0 params_rate=18000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_19m",
+      "label": "SPAN 19.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 19000000.0,
+      "sample_rate_hz": 19000000.0,
+      "rbw_hz": 18554.6875,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=19.000 MHz span=19.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=19.000 MHz span=19.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=18554.7 Hz derived=18554.7 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=19000000.0 params_rate=19000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_19m",
+      "label": "SPAN 19.5 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 19500000.0,
+      "sample_rate_hz": 19500000.0,
+      "rbw_hz": 19042.96875,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=19.500 MHz span=19.500 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=19.500 MHz span=19.500 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=19043.0 Hz derived=19043.0 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=19500000.0 params_rate=19500000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_20m",
+      "label": "SPAN 20.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 20000000.0,
+      "sample_rate_hz": 20000000.0,
+      "rbw_hz": 19531.25,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=20.000 MHz span=20.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=20.000 MHz span=20.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=19531.2 Hz derived=19531.2 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=20000000.0 params_rate=20000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_20m",
+      "label": "SPAN 20.5 MHz AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 20500000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 342.5,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=20.500 MHz span=20.500 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=342.5",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=100000.0 params_rbw=100000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_21m",
+      "label": "SPAN 21.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 21000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 350.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=21.000 MHz span=21.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=350.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=100000.0 params_rbw=100000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_25m",
+      "label": "SPAN 25.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 25000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 410.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=25.000 MHz span=25.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=410.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=100000.0 params_rbw=100000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_40m",
+      "label": "SPAN 40.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 40000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 635.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=40.000 MHz span=40.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=635.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=100000.0 params_rbw=100000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_80m",
+      "label": "SPAN 80.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 80000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 300000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 435.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=80.000 MHz span=80.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=300.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=435.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=300000.0 params_rbw=300000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "span_100m",
+      "label": "SPAN 100.0 MHz AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 100000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 300000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 535.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=100.000 MHz span=100.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=300.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=535.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=300000.0 params_rbw=300000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "trans_0_19_21",
+      "label": "Transici\u00f3n 19\u219221 MHz",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 21000000.0,
+      "sample_rate_hz": 19000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 350.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=21.000 MHz span=21.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=350.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=100000.0 params_rbw=100000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "trans_1_21_19",
+      "label": "Transici\u00f3n 21\u219219 MHz",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 19000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 320.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=iq (hist\u00e9resis barrido 15\u201320 MHz)",
+          "severity": "warn"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=19.000 MHz span=19.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=320.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "trans_2_20_50",
+      "label": "Transici\u00f3n 20\u219250 MHz",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 50000000.0,
+      "sample_rate_hz": 20000000.0,
+      "rbw_hz": 178571.42857142858,
+      "fft_size": 1024,
+      "sweep_time_ms": 455.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=50.000 MHz span=50.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=178.6 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=455.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=178571.42857142858 params_rbw=178571.42857142858",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "trans_3_50_10",
+      "label": "Transici\u00f3n 50\u219210 MHz",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 10000000.0,
+      "sample_rate_hz": 10000000.0,
+      "rbw_hz": 9765.625,
+      "fft_size": 1024,
+      "sweep_time_ms": 455.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=9765.6 Hz derived=9765.6 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=10000000.0 params_rate=10000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "trans_4_18_25",
+      "label": "Transici\u00f3n 18\u219225 MHz",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 25000000.0,
+      "sample_rate_hz": 18000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 410.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=25.000 MHz span=25.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=410.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=100000.0 params_rbw=100000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "trans_5_25_18",
+      "label": "Transici\u00f3n 25\u219218 MHz",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 18000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 100000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 305.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=iq (hist\u00e9resis barrido 15\u201320 MHz)",
+          "severity": "warn"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=18.000 MHz span=18.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=100.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=305.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "iq_all_auto",
+      "label": "IQ todo AUTO",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 10000000.0,
+      "sample_rate_hz": 10000000.0,
+      "rbw_hz": 9765.625,
+      "fft_size": 1024,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=9765.6 Hz derived=9765.6 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=True fft_auto=True",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=1024 params_fft=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=10000000.0 params_rate=10000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "iq_manual_fft",
+      "label": "IQ FFT manual 4096",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 10000000.0,
+      "sample_rate_hz": 10000000.0,
+      "rbw_hz": 2441.40625,
+      "fft_size": 4096,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=4096",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=4096",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=2441.4 Hz derived=2441.4 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=False fft_auto=False",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=4096",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=4096 params_fft=4096",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=10000000.0 params_rate=10000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "iq_manual_rbw",
+      "label": "IQ RBW manual 50 kHz",
+      "passed": true,
+      "capture_mode": "iq",
+      "span_hz": 10000000.0,
+      "sample_rate_hz": 10000000.0,
+      "rbw_hz": 39062.5,
+      "fft_size": 256,
+      "sweep_time_ms": 100.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=iq policy=iq",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=256",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=256",
+          "severity": "error"
+        },
+        {
+          "name": "iq_sample_rate_matches_span",
+          "passed": true,
+          "detail": "sample_rate=10.000 MHz span=10.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_equals_sr_over_fft",
+          "passed": true,
+          "detail": "rbw=39062.5 Hz derived=39062.5 Hz",
+          "severity": "error"
+        },
+        {
+          "name": "iq_rbw_fft_auto_linked",
+          "passed": true,
+          "detail": "rbw_auto=False fft_auto=False",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=256",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_fft_coherent",
+          "passed": true,
+          "detail": "plan_fft=256 params_fft=256",
+          "severity": "error"
+        },
+        {
+          "name": "plan_iq_rate_coherent",
+          "passed": true,
+          "detail": "plan_rate=10000000.0 params_rate=10000000.0",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "sweep_all_auto",
+      "label": "Barrido todo AUTO",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 50000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 178571.42857142858,
+      "fft_size": 1024,
+      "sweep_time_ms": 455.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=50.000 MHz span=50.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=178.6 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=455.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=178571.42857142858 params_rbw=178571.42857142858",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "sweep_manual_rbw",
+      "label": "Barrido RBW manual 300 kHz",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 50000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 300000.0,
+      "fft_size": 1024,
+      "sweep_time_ms": 285.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=50.000 MHz span=50.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=300.0 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=285.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=801",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=300000.0 params_rbw=300000.0",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    },
+    {
+      "scenario_id": "sweep_manual_fft",
+      "label": "Barrido FFT manual 1024",
+      "passed": true,
+      "capture_mode": "sweep",
+      "span_hz": 50000000.0,
+      "sample_rate_hz": 2000000.0,
+      "rbw_hz": 178571.42857142858,
+      "fft_size": 1024,
+      "sweep_time_ms": 455.0,
+      "checks": [
+        {
+          "name": "capture_mode_matches_policy",
+          "passed": true,
+          "detail": "capture_mode=sweep policy=sweep",
+          "severity": "error"
+        },
+        {
+          "name": "freq_window_matches_span",
+          "passed": true,
+          "detail": "window=50.000 MHz span=50.000 MHz",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_power_of_two",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "fft_size_in_range",
+          "passed": true,
+          "detail": "fft_size=1024",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_rbw_min_100k",
+          "passed": true,
+          "detail": "rbw=178.6 kHz",
+          "severity": "error"
+        },
+        {
+          "name": "sweep_time_positive",
+          "passed": true,
+          "detail": "sweep_time_ms=455.0",
+          "severity": "error"
+        },
+        {
+          "name": "display_bins_reasonable",
+          "passed": true,
+          "detail": "display_bins=1024",
+          "severity": "error"
+        },
+        {
+          "name": "plan_sweep_rbw_coherent",
+          "passed": true,
+          "detail": "plan_rbw=178571.42857142858 params_rbw=178571.42857142858",
+          "severity": "error"
+        },
+        {
+          "name": "plan_mode_sweep",
+          "passed": true,
+          "detail": "mode=AcquisitionMode.SWEEP",
+          "severity": "error"
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

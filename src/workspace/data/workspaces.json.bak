@@ -1,0 +1,104 @@
+{
+  "config": {
+    "language": "es",
+    "backup_path": "C:\\Users\\josea\\Documents",
+    "recent_projects": [
+      {
+        "path": "C:\\Users\\josea\\Documents\\controladorf_v1.crf",
+        "name": "controladorf_v1"
+      },
+      {
+        "path": "C:\\Users\\josea\\Documents\\Informatica\\Python\\ControladoRF\\ControladoRF V1\\Nuevo proyecto.crf.json",
+        "name": "Nuevo proyecto"
+      }
+    ],
+    "last_opened_project_path": "C:\\Users\\josea\\Documents\\controladorf_v1.crf",
+    "monitor_export_dirs": {
+      "monitor_trace_csv": "C:\\Users\\josea\\Desktop\\trazas",
+      "monitor_trace_csv_workbench": "C:\\Users\\josea\\Desktop\\trazas",
+      "monitor_trace_csv_soundbase": "C:\\Users\\josea\\Desktop\\trazas"
+    }
+  },
+  "workspaces": [
+    {
+      "name": "Default",
+      "description": "Configuración por defecto",
+      "config": {
+        "language": "es",
+        "main_window_geometry": "AdnQywADAAAAAAD+AAAAUAAABa0AAAONAAAA/gAAAG4AAAWtAAADjQAAAAAAAAAABqsAAAD+AAAAbgAABa0AAAON",
+        "dock_state": "AAAA/wAAAAD9AAAAAgAAAAAAAAPfAAAC5PwCAAAAAvsAAAAgAEQAbwBjAGsAUABhAG4AZQBsAF8AcABhAG4AZQBsADEBAAAAJQAAAZwAAABRAP////sAAAAgAEQAbwBjAGsAUABhAG4AZQBsAF8AcABhAG4AZQBsADMBAAABxQAAAUQAAABRAP///wAAAAEAAADNAAAC5PwCAAAAAfsAAAAgAEQAbwBjAGsAUABhAG4AZQBsAF8AcABhAG4AZQBsADIBAAAAJQAAAuQAAABRAP///wAAAAAAAALkAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAE0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA",
+        "dock_sizes": {
+          "panel1": [
+            991,
+            412
+          ],
+          "panel2": [
+            205,
+            740
+          ],
+          "panel3": [
+            991,
+            324
+          ]
+        },
+        "splitter_sizes": [],
+        "workspace_table_column_widths": [
+          100,
+          515,
+          55,
+          100
+        ],
+        "workspace_table_column_order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "workspace_table_selection": []
+      },
+      "is_default": true
+    },
+    {
+      "name": "mio",
+      "description": "mio 2",
+      "config": {
+        "language": "es",
+        "workspace_table_column_widths": [
+          100,
+          507,
+          60,
+          100
+        ],
+        "workspace_table_column_order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "workspace_table_selection": [],
+        "main_window_geometry": "AdnQywADAAAAAAAA////+QAABqoAAAP6AAAA/gAAAG4AAAaoAAADjQAAAAACAAAABqsAAAAAAAAAFwAABqoAAAP6",
+        "dock_state": "AAAA/wAAAAD9AAAAAgAAAAAAAANdAAACzPwCAAAAAvsAAAAgAEQAbwBjAGsAUABhAG4AZQBsAF8AcABhAG4AZQBsADEBAAAANwAAAbgAAADHAP////sAAAAgAEQAbwBjAGsAUABhAG4AZQBsAF8AcABhAG4AZQBsADMBAAAB9QAAAQ4AAABZAP///wAAAAEAAAFNAAACzPwCAAAAAfsAAAAgAEQAbwBjAGsAUABhAG4AZQBsAF8AcABhAG4AZQBsADIBAAAANwAAAswAAABZAP///wAAAAAAAALMAAAABAAAAAQAAAAIAAAACPwAAAABAAAAAgAAAAEAAAAWAE0AYQBpAG4AVABvAG8AbABCAGEAcgEAAAAA/////wAAAAAAAAAA",
+        "dock_sizes": {
+          "panel1": [
+            861,
+            440
+          ],
+          "panel2": [
+            333,
+            716
+          ],
+          "panel3": [
+            861,
+            270
+          ]
+        },
+        "splitter_sizes": [],
+        "inventory_table_header": "AAAA/wAAAAAAAAABAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAA/YAAAAKAQEBAQAAAAAAAAAAAAAAAG7/////AAAAhAAAAAAAAAAKAAAANwAAAAEAAAAAAAAAWQAAAAEAAAAAAAAAwgAAAAEAAAAAAAAAPAAAAAEAAAAAAAAAgAAAAAEAAAAAAAAAkgAAAAEAAAAAAAAAWQAAAAEAAAAAAAAANQAAAAEAAAACAAAANgAAAAEAAAACAAAAkgAAAAEAAAACAAAD6AEAAABXAAAAAAAAAAAAAAAAAAAAAQ==",
+        "main_window_maximized": true,
+        "inventory_table_text_alignment": "center"
+      },
+      "is_default": false
+    }
+  ],
+  "last_active_workspace": "mio"
+}

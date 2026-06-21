@@ -1,0 +1,56 @@
+# Release W11 — CONTROLADORF
+
+## Cuándo aplicar
+
+Al preparar una **nueva versión** para Windows 11: compilar, instalador Setup y publicar en GitHub Releases.
+
+## Configuración (una vez)
+
+1. `src/resources/update_config.json`: `enabled: true`, `github_owner`, `github_repo`
+2. [GitHub CLI](https://cli.github.com/): `gh auth login`
+3. [Inno Setup 6](https://jrsoftware.org/isinfo.php): `winget install JRSoftware.InnoSetup`
+
+## Flujo único desde Cursor
+
+```powershell
+# 1. Subir versión
+# Editar src/VERSION (ej. 1.0.2)
+
+# 2. Anotar cambios (opcional)
+# Editar CHANGELOG.md bajo ## 1.0.2
+
+# 3. Compilar + Setup + publicar GitHub
+powershell -ExecutionPolicy Bypass -File scripts\release_w11.ps1 -Notes "Descripción breve"
+```
+
+Solo compilar sin publicar:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release_w11.ps1 -SkipPublish
+```
+
+## Salida
+
+`Documents\distribuciones python\`
+
+- `ControladoRF-<version>-w11/` — carpeta portable
+- `ControladoRF-<version>-w11.zip` — respaldo
+- `ControladoRF-<version>-w11-Setup.exe` — **instalador recomendado para usuarios**
+
+## Actualizaciones automáticas
+
+Tras publicar en GitHub Releases, la app empaquetada (con `enabled: true` en el build) comprueba al arrancar y en **Ayuda → Buscar actualizaciones…**. Ofrece descargar el **Setup.exe** (prioridad) o el ZIP.
+
+## No usar
+
+- `build_onefile_release.py` — one-file provoca bucles de consola; solo pruebas legacy.
+
+## Archivos clave
+
+| Archivo | Rol |
+|---------|-----|
+| `scripts/release_w11.ps1` | Entrada principal release |
+| `scripts/build_distribucion_w11.py` | PyInstaller onedir + rf-tools |
+| `packaging/w11/installer.iss` | Inno Setup |
+| `src/VERSION` | Versión semver |
+| `src/resources/update_config.json` | GitHub + flags de update |

@@ -1,0 +1,22 @@
+=== Cadena RF 2026-06-19T20:05:09 ===
+FC=97.300 MHz  SR=20.00 Msps  FFT=2048  LNA=24 VGA=36 P=OFF
+FI=87.300 MHz  FF=107.300 MHz  BB_filter_auto=15.0 MHz (75% SR)
+Ganancia_nominal=60 dB  offset_antena=+32 dB
+
+Fuente: HackRF backend=lib
+RX: RX IQ (libhackrf) 97.300 MHz · 20.00 Msps · BB 15.00 MHz · LNA 24 · VGA 36 · P−
+IQ muestras: RMS=0.0249  pico|IQ|=0.0668  (sat si ~1.0)
+
+[1_raw_fft_dBFS] FI= -71.3 dB  FC= -35.8 dB  FF= -70.8 dB  pico= -35.8 dB @ 97.300 MHz  pico_interior= -35.8 dB @ 97.300 MHz  med= -67.5 dB
+[2_minus_rx_gain] FI=-131.3 dB  FC= -95.8 dB  FF=-130.8 dB  pico= -95.8 dB @ 97.300 MHz  pico_interior= -95.8 dB @ 97.300 MHz  med=-127.5 dB
+[3_calibrado_dBm] FI= -99.3 dB  FC= -63.8 dB  FF= -98.8 dB  pico= -63.8 dB @ 97.300 MHz  pico_interior= -63.8 dB @ 97.300 MHz  med= -95.5 dB
+[4_dc_notch] FI= -99.3 dB  FC= -63.8 dB  FF= -98.8 dB  pico= -63.8 dB @ 97.300 MHz  pico_interior= -63.8 dB @ 97.300 MHz  med= -95.5 dB
+[5_edge_guard] FI= -99.3 dB  FC= -63.8 dB  FF= -98.8 dB  pico= -63.8 dB @ 97.300 MHz  pico_interior= -63.8 dB @ 97.300 MHz  med= -95.5 dB
+[6_compute_spectrum_frame] FI= -99.3 dB  FC= -63.8 dB  FF= -98.8 dB  pico= -63.8 dB @ 97.300 MHz  pico_interior= -63.8 dB @ 97.300 MHz  med= -95.5 dB
+AUTO escala: ref=-56.6 dBm  rango=60 dB  (piso visible ~ -116.6 dBm)
+find_peak_excluding_dc -> 94.009 MHz @ -84.0 dB
+pico_global (argmax) -> 97.300 MHz @ -63.8 dB
+
+OK Hay energia interior por encima del piso AUTO -- si no se ve, fallo es de PINTADO/GUI.
+
+Ver docs/audit/06_portadoras_fi_ff.md

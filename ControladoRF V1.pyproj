@@ -1,0 +1,250 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>36018322-05de-4cd5-aa3e-2472ee6e7bcc</ProjectGuid>
+    <ProjectHome>.</ProjectHome>
+    <StartupFile>src\main.py</StartupFile>
+    <SearchPath>src</SearchPath>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <Name>ControladoRF V1</Name>
+    <RootNamespace>ControladoRF V1</RootNamespace>
+    <InterpreterId>MSBuild|env|$(MSBuildProjectFullPath)</InterpreterId>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src\app_lifecycle.py" />
+    <Compile Include="src\core\app_services.py" />
+    <Compile Include="src\core\exceptions.py" />
+    <Compile Include="src\core\services\item_service.py" />
+    <Compile Include="src\core\services\__init__.py" />
+    <Compile Include="src\core\__init__.py" />
+    <Compile Include="src\db\config.py" />
+    <Compile Include="src\db\connection.py" />
+    <Compile Include="src\db\exceptions.py" />
+    <Compile Include="src\db\maintenance.py" />
+    <Compile Include="src\db\migration.py" />
+    <Compile Include="src\db\models\item.py" />
+    <Compile Include="src\db\models\__init__.py" />
+    <Compile Include="src\db\repositories\base.py" />
+    <Compile Include="src\db\repositories\item_repository.py" />
+    <Compile Include="src\db\repositories\__init__.py" />
+    <Compile Include="src\db\service.py" />
+    <Compile Include="src\db\settings.py" />
+    <Compile Include="src\db\__init__.py" />
+    <Compile Include="src\gui\about_dialog.py" />
+    <Compile Include="src\gui\app_chrome_styles.py" />
+    <Compile Include="src\gui\config_db_tab.py" />
+    <Compile Include="src\gui\config_dialog.py" />
+    <Compile Include="src\gui\dialog_styles.py" />
+    <Compile Include="src\gui\dock_panel1.py" />
+    <Compile Include="src\gui\dock_panel2.py" />
+    <Compile Include="src\gui\dock_panel3.py" />
+    <Compile Include="src\gui\dock_panel_base.py" />
+    <Compile Include="src\gui\icon_utils.py" />
+    <Compile Include="src\gui\items_panel_widget.py" />
+    <Compile Include="src\gui\item_edit_dialog.py" />
+    <Compile Include="src\gui\main_window.py" />
+    <Compile Include="src\gui\menu_bar.py" />
+    <Compile Include="src\gui\panel_styles.py" />
+    <Compile Include="src\gui\status_bar.py" />
+    <Compile Include="src\gui\tool_bar.py" />
+    <Compile Include="src\gui\workspace_manager.py" />
+    <Compile Include="src\gui\_layout_utils.py" />
+    <Compile Include="src\gui\__init__.py" />
+    <Compile Include="src\i18n\json_translation.py" />
+    <Compile Include="src\i18n\translation_utils.py" />
+    <Compile Include="src\i18n\__init__.py" />
+    <Compile Include="src\main.py" />
+    <Compile Include="src\resources\icons\dark\__init__.py" />
+    <Compile Include="src\resources\icons\light\__init__.py" />
+    <Compile Include="src\resources\icons\__init__.py" />
+    <Compile Include="src\resources\styles\__init__.py" />
+    <Compile Include="src\resources\__init__.py" />
+    <Compile Include="src\utils\logger.py" />
+    <Compile Include="src\utils\theme_utils.py" />
+    <Compile Include="src\utils\__init__.py" />
+    <Compile Include="src\workspace\aware.py" />
+    <Compile Include="src\workspace\controller.py" />
+    <Compile Include="src\workspace\model.py" />
+    <Compile Include="src\workspace\store.py" />
+    <Compile Include="src\workspace\validators.py" />
+    <Compile Include="src\workspace\workspace_io.py" />
+    <Compile Include="src\workspace\__init__.py" />
+    <Compile Include="src\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="docs\" />
+    <Folder Include="logs\" />
+    <Folder Include="tests_gui\" />
+    <Folder Include="tests\" />
+    <Folder Include="scripts\" />
+    <Folder Include="src\" />
+    <Folder Include="src\core\" />
+    <Folder Include="src\core\services\" />
+    <Folder Include="src\core\services\__pycache__\" />
+    <Folder Include="src\core\__pycache__\" />
+    <Folder Include="src\db\" />
+    <Folder Include="src\db\models\" />
+    <Folder Include="src\db\models\__pycache__\" />
+    <Folder Include="src\db\repositories\" />
+    <Folder Include="src\db\repositories\__pycache__\" />
+    <Folder Include="src\db\__pycache__\" />
+    <Folder Include="src\gui\" />
+    <Folder Include="src\gui\__pycache__\" />
+    <Folder Include="src\i18n\" />
+    <Folder Include="src\i18n\qm\" />
+    <Folder Include="src\i18n\__pycache__\" />
+    <Folder Include="src\resources\" />
+    <Folder Include="src\resources\icons\" />
+    <Folder Include="src\resources\icons\dark\" />
+    <Folder Include="src\resources\icons\light\" />
+    <Folder Include="src\resources\styles\" />
+    <Folder Include="src\utils\" />
+    <Folder Include="src\utils\__pycache__\" />
+    <Folder Include="src\workspace\" />
+    <Folder Include="src\workspace\data\" />
+    <Folder Include="src\workspace\__pycache__\" />
+    <Folder Include="src\__pycache__\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="docs\arquitectura_app.md" />
+    <Content Include="docs\arquitectura_gral.md" />
+    <Content Include="docs\core.md" />
+    <Content Include="docs\db.md" />
+    <Content Include="docs\gui.md" />
+    <Content Include="docs\logging.md" />
+    <Content Include="docs\README.md" />
+    <Content Include="src\core\README.md" />
+    <Content Include="src\core\services\__pycache__\item_service.cpython-314.pyc" />
+    <Content Include="src\core\services\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\core\__pycache__\app_services.cpython-314.pyc" />
+    <Content Include="src\core\__pycache__\exceptions.cpython-314.pyc" />
+    <Content Include="src\core\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\db\models\__pycache__\item.cpython-314.pyc" />
+    <Content Include="src\db\models\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\db\README.md" />
+    <Content Include="src\db\repositories\__pycache__\base.cpython-314.pyc" />
+    <Content Include="src\db\repositories\__pycache__\item_repository.cpython-314.pyc" />
+    <Content Include="src\db\repositories\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\config.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\connection.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\exceptions.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\maintenance.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\migration.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\service.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\settings.cpython-314.pyc" />
+    <Content Include="src\db\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\gui\README.md" />
+    <Content Include="src\gui\__pycache__\about_dialog.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\app_chrome_styles.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\config_db_tab.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\config_dialog.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\dialog_styles.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\dock_panel1.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\dock_panel2.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\dock_panel3.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\dock_panel_base.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\icon_utils.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\items_panel_widget.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\item_edit_dialog.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\main_window.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\menu_bar.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\panel1.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\panel2.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\panel3.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\panel_base.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\panel_styles.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\status_bar.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\tool_bar.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\workspace_manager.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\_layout_utils.cpython-314.pyc" />
+    <Content Include="src\gui\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\i18n\en.json" />
+    <Content Include="src\i18n\es.json" />
+    <Content Include="src\i18n\qm\en.qm" />
+    <Content Include="src\i18n\qm\en.ts" />
+    <Content Include="src\i18n\qm\es.qm" />
+    <Content Include="src\i18n\qm\es.ts" />
+    <Content Include="src\i18n\qm\README.txt" />
+    <Content Include="src\i18n\README.md" />
+    <Content Include="src\i18n\__pycache__\json_translation.cpython-314.pyc" />
+    <Content Include="src\i18n\__pycache__\translation_utils.cpython-314.pyc" />
+    <Content Include="src\i18n\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\resources\icons\dark\actuvate.png" />
+    <Content Include="src\resources\icons\dark\delete.png" />
+    <Content Include="src\resources\icons\dark\duplicate.png" />
+    <Content Include="src\resources\icons\dark\export.png" />
+    <Content Include="src\resources\icons\dark\import.png" />
+    <Content Include="src\resources\icons\dark\new.png" />
+    <Content Include="src\resources\icons\dark\options.png" />
+    <Content Include="src\resources\icons\dark\README.md" />
+    <Content Include="src\resources\icons\dark\settings.png" />
+    <Content Include="src\resources\icons\ico.ico" />
+    <Content Include="src\resources\icons\light\activate.png" />
+    <Content Include="src\resources\icons\light\delete.png" />
+    <Content Include="src\resources\icons\light\duplicate.png" />
+    <Content Include="src\resources\icons\light\export.png" />
+    <Content Include="src\resources\icons\light\import.png" />
+    <Content Include="src\resources\icons\light\new.png" />
+    <Content Include="src\resources\icons\light\options.png" />
+    <Content Include="src\resources\icons\light\README.md" />
+    <Content Include="src\resources\icons\light\settings.png" />
+    <Content Include="src\resources\icons\README.md" />
+    <Content Include="src\resources\README.md" />
+    <Content Include="src\resources\styles\README.md" />
+    <Content Include="src\utils\README.md" />
+    <Content Include="src\utils\__pycache__\logger.cpython-314.pyc" />
+    <Content Include="src\utils\__pycache__\theme_utils.cpython-314.pyc" />
+    <Content Include="src\utils\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\VERSION" />
+    <Content Include="src\workspace\data\.json" />
+    <Content Include="src\workspace\data\app.db" />
+    <Content Include="src\workspace\data\workspaces.json" />
+    <Content Include="src\workspace\data\workspaces.json.bak" />
+    <Content Include="src\workspace\README.md" />
+    <Content Include="src\workspace\__pycache__\app_config.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\aware.cpython-313.pyc" />
+    <Content Include="src\workspace\__pycache__\aware.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\controller.cpython-313.pyc" />
+    <Content Include="src\workspace\__pycache__\controller.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\manager.cpython-313.pyc" />
+    <Content Include="src\workspace\__pycache__\model.cpython-313.pyc" />
+    <Content Include="src\workspace\__pycache__\model.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\store.cpython-313.pyc" />
+    <Content Include="src\workspace\__pycache__\store.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\validators.cpython-313.pyc" />
+    <Content Include="src\workspace\__pycache__\validators.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\workspace_io.cpython-314.pyc" />
+    <Content Include="src\workspace\__pycache__\__init__.cpython-314.pyc" />
+    <Content Include="src\__pycache__\app_lifecycle.cpython-314.pyc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Interpreter Include="env\">
+      <Id>env</Id>
+      <Version>3.14</Version>
+      <Description>env (Python 3.14.5)</Description>
+      <InterpreterPath>Scripts\python.exe</InterpreterPath>
+      <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
+      <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>
+      <Architecture>X64</Architecture>
+    </Interpreter>
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
+  <!-- Uncomment the CoreCompile target to enable the Build command in
+       Visual Studio and specify your pre- and post-build commands in
+       the BeforeBuild and AfterBuild targets below. -->
+  <!--<Target Name="CoreCompile" />-->
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+</Project>

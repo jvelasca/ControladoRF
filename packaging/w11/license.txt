@@ -1,0 +1,9 @@
+CONTROLADORF — Acuerdo de licencia
+
+Copyright (c) jvelasca
+
+Este software se proporciona "tal cual", sin garantía de ningún tipo.
+Úselo bajo su propia responsabilidad en entornos de monitorización RF.
+
+Para soporte y actualizaciones:
+https://github.com/jvelasca/ControladoRF

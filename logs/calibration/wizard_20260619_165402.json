@@ -1,0 +1,1261 @@
+{
+  "session_id": "20260619_165402",
+  "started_at": "2026-06-19T16:54:02.089139+00:00",
+  "finished_at": "2026-06-19T17:14:18.058008+00:00",
+  "summary": {
+    "user_pass": 10,
+    "user_fail": 7,
+    "user_skip": 0,
+    "backend_fail": 0,
+    "incoherent": 7,
+    "total_recorded": 17
+  },
+  "records": {
+    "prep_device": {
+      "step_id": "prep_device",
+      "index": 0,
+      "title": "1. Comprobar dispositivo",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 2.0,
+          "sample_rate_mhz": 2.0,
+          "rbw_khz": 1.953125,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 100.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 40,
+          "center_mhz": 100.0,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 2.0,
+          "sample_rate_mhz": 2.0,
+          "rbw_khz": 1.953125,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 100.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 40,
+          "center_mhz": 100.0,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [
+          "Paso preparatorio — validación visual del operador"
+        ],
+        "diagnosis": [
+          "Backend OK — confirme dispositivo y PLAY visualmente."
+        ],
+        "metrics": {
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T16:56:36.716612+00:00"
+    },
+    "prep_play": {
+      "step_id": "prep_play",
+      "index": 1,
+      "title": "2. Iniciar captura",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "en modo SDR funciona bien  pero en modo analizador al pasar de un SPAN de 20 a 21 mhz cambia completamente el espectro aunque todo sigua en auto y la  traza no se parece en nada (es mala). Por otra parte en ambos modos al pulsar (...) en AMPT su modo auto Y LOS parametrso modificables como \"nivel de referencia\"  no ofrece nives de modificacion ahí y rango/posicion de ref (que si ofrece valores) no es claro y coherente. Hay que reacer todo esto ahí de forma mas clara.",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 2.0,
+          "sample_rate_mhz": 2.0,
+          "rbw_khz": 1.953125,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 100.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 40,
+          "center_mhz": 100.0,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 2.0,
+          "sample_rate_mhz": 2.0,
+          "rbw_khz": 1.953125,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 100.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 40,
+          "center_mhz": 100.0,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [
+          "Paso preparatorio — validación visual del operador"
+        ],
+        "diagnosis": [
+          "Backend OK — confirme dispositivo y PLAY visualmente."
+        ],
+        "metrics": {
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [
+            "escala",
+            "traza",
+            "span_modo",
+            "ganancia"
+          ],
+          "length": 471,
+          "text_preview": "en modo SDR funciona bien  pero en modo analizador al pasar de un SPAN de 20 a 21 mhz cambia completamente el espectro aunque todo sigua en auto y la  traza no se parece en nada (es mala). Por otra parte en ambos modos al pulsar (...) en AMPT su modo auto Y LOS parametrso modificables como \"nivel de referencia\"  no ofrece nives de modificacion ahí y rango/posicion de ref (que si ofrece valores) no es claro y coherente. Hay que reacer todo esto ahí de forma mas clara."
+        }
+      },
+      "recorded_at": "2026-06-19T17:04:10.485836+00:00"
+    },
+    "iq_span_10m": {
+      "step_id": "iq_span_10m",
+      "index": 2,
+      "title": "3. SPAN 10 MHz — modo IQ",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "en modo SDR funciona bien  pero en modo analizador al pasar de un SPAN de 20 a 21 mhz cambia completamente el espectro aunque todo sigua en auto y la  traza no se parece en nada (es mala). Por otra parte en ambos modos al pulsar (...) en AMPT su modo auto Y LOS parametrso modificables como \"nivel de referencia\"  no ofrece nives de modificacion ahí y rango/posicion de ref (que si ofrece valores) no es claro y coherente. Hay que reacer todo esto ahí de forma mas clara. NO veo lo que dices de done muestra los resultados.",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [
+            "escala",
+            "traza",
+            "span_modo",
+            "ganancia"
+          ],
+          "length": 523,
+          "text_preview": "en modo SDR funciona bien  pero en modo analizador al pasar de un SPAN de 20 a 21 mhz cambia completamente el espectro aunque todo sigua en auto y la  traza no se parece en nada (es mala). Por otra parte en ambos modos al pulsar (...) en AMPT su modo auto Y LOS parametrso modificables como \"nivel de referencia\"  no ofrece nives de modificacion ahí y rango/posicion de ref (que si ofrece valores) no es claro y coherente. Hay que reacer todo esto ahí de forma mas clara. NO veo lo que dices de done "
+        }
+      },
+      "recorded_at": "2026-06-19T17:06:44.065076+00:00"
+    },
+    "iq_trace_signal": {
+      "step_id": "iq_trace_signal",
+      "index": 3,
+      "title": "4. Calidad de traza IQ",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — validación visual pendiente del operador."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:07:23.581550+00:00"
+    },
+    "iq_fft_manual": {
+      "step_id": "iq_fft_manual",
+      "index": 4,
+      "title": "5. FFT manual 4096",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "mas fina y ondulate pero OK",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 2.44140625,
+          "fft_size": 4096,
+          "fft_auto": false,
+          "rbw_auto": false,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 2.44140625,
+          "fft_size": 4096,
+          "fft_auto": false,
+          "rbw_auto": false,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 2441.40625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [],
+          "length": 27,
+          "text_preview": "mas fina y ondulate pero OK"
+        }
+      },
+      "recorded_at": "2026-06-19T17:07:48.849959+00:00"
+    },
+    "iq_rbw_manual": {
+      "step_id": "iq_rbw_manual",
+      "index": 5,
+      "title": "6. RBW manual 50 kHz (IQ)",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "mas fina y ondulate pero OK",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 39.0625,
+          "fft_size": 256,
+          "fft_auto": false,
+          "rbw_auto": false,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 39.0625,
+          "fft_size": 256,
+          "fft_auto": false,
+          "rbw_auto": false,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 39062.5,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [],
+          "length": 27,
+          "text_preview": "mas fina y ondulate pero OK"
+        }
+      },
+      "recorded_at": "2026-06-19T17:08:06.502370+00:00"
+    },
+    "iq_span_20m": {
+      "step_id": "iq_span_20m",
+      "index": 6,
+      "title": "7. SPAN 20 MHz — límite IQ",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "no muestra nada en SWT pone - y no deja cambiar nada",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 20.0,
+          "sample_rate_mhz": 20.0,
+          "rbw_khz": 19.53125,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 20.0,
+          "sample_rate_mhz": 20.0,
+          "rbw_khz": 19.53125,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 20.0,
+          "effective_rbw_hz": 19531.25,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [
+            "rbw_fft"
+          ],
+          "length": 52,
+          "text_preview": "no muestra nada en SWT pone - y no deja cambiar nada"
+        }
+      },
+      "recorded_at": "2026-06-19T17:09:34.305373+00:00"
+    },
+    "transition_19_21": {
+      "step_id": "transition_19_21",
+      "index": 7,
+      "title": "8. Transición 19 → 21 MHz",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "falla como he dicho antes y deja de verse las portadoras",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "sweep",
+          "span_mhz": 21.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 100.0,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "sweep",
+          "span_mhz": 21.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 100.0,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 350.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 21.0,
+          "effective_rbw_hz": 100000.0,
+          "policy_capture_mode": "sweep"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes.",
+          "Comentario sin etiquetas conocidas — revisar texto manualmente."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [],
+          "length": 56,
+          "text_preview": "falla como he dicho antes y deja de verse las portadoras"
+        }
+      },
+      "recorded_at": "2026-06-19T17:10:13.679041+00:00"
+    },
+    "sweep_span_50m": {
+      "step_id": "sweep_span_50m",
+      "index": 8,
+      "title": "9. Barrido 50 MHz AUTO",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "falla como he dicho antes y deja de verse las portadoras",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "sweep",
+          "span_mhz": 50.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 178.57142857142858,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 455.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "sweep",
+          "span_mhz": 50.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 178.57142857142858,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 455.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 50.0,
+          "effective_rbw_hz": 178571.42857142858,
+          "policy_capture_mode": "sweep"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes.",
+          "Comentario sin etiquetas conocidas — revisar texto manualmente."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [],
+          "length": 56,
+          "text_preview": "falla como he dicho antes y deja de verse las portadoras"
+        }
+      },
+      "recorded_at": "2026-06-19T17:11:47.048695+00:00"
+    },
+    "sweep_rbw_manual": {
+      "step_id": "sweep_rbw_manual",
+      "index": 9,
+      "title": "10. RBW manual en barrido",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "falla como he dicho antes y deja de verse las portadoras",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "sweep",
+          "span_mhz": 50.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 300.0,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": false,
+          "sweep_auto": false,
+          "sweep_ms": 455.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "sweep",
+          "span_mhz": 50.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 300.0,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": false,
+          "sweep_auto": false,
+          "sweep_ms": 455.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 50.0,
+          "effective_rbw_hz": 300000.0,
+          "policy_capture_mode": "sweep"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes.",
+          "Comentario sin etiquetas conocidas — revisar texto manualmente."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [],
+          "length": 56,
+          "text_preview": "falla como he dicho antes y deja de verse las portadoras"
+        }
+      },
+      "recorded_at": "2026-06-19T17:12:04.526063+00:00"
+    },
+    "sweep_fft_manual": {
+      "step_id": "sweep_fft_manual",
+      "index": 10,
+      "title": "11. FFT manual en barrido",
+      "user_verdict": "fail",
+      "backend_passed": true,
+      "user_comment": "falla como he dicho antes y deja de verse las portadoras",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "sweep",
+          "span_mhz": 50.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 178.57142857142858,
+          "fft_size": 1024,
+          "fft_auto": false,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 455.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "sweep",
+          "span_mhz": 50.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 178.57142857142858,
+          "fft_size": 1024,
+          "fft_auto": false,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 455.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 50.0,
+          "effective_rbw_hz": 178571.42857142858,
+          "policy_capture_mode": "sweep"
+        }
+      },
+      "coherence": {
+        "coherent": false,
+        "issues": [
+          "Operador FAIL pero backend PASS — problema visual/stream no capturado por invariantes.",
+          "Comentario sin etiquetas conocidas — revisar texto manualmente."
+        ],
+        "comment_analysis": {
+          "empty": false,
+          "tags": [],
+          "length": 56,
+          "text_preview": "falla como he dicho antes y deja de verse las portadoras"
+        }
+      },
+      "recorded_at": "2026-06-19T17:12:19.895136+00:00"
+    },
+    "hysteresis_18m": {
+      "step_id": "hysteresis_18m",
+      "index": 11,
+      "title": "12. Histéresis — bajar a 18 MHz",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "sweep",
+          "span_mhz": 18.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 100.0,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "sweep",
+          "span_mhz": 18.0,
+          "sample_rate_mhz": 19.0,
+          "rbw_khz": 100.0,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 18.0,
+          "effective_rbw_hz": 100000.0,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:12:45.914831+00:00"
+    },
+    "hysteresis_10m": {
+      "step_id": "hysteresis_10m",
+      "index": 12,
+      "title": "13. Volver a IQ — 10 MHz",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:12:57.807343+00:00"
+    },
+    "display_ref_auto": {
+      "step_id": "display_ref_auto",
+      "index": 13,
+      "title": "14. Escala AUTO",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": 0.0,
+          "ref_range_db": 100.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — validación visual pendiente del operador."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:13:14.128423+00:00"
+    },
+    "display_ref_manual": {
+      "step_id": "display_ref_manual",
+      "index": 14,
+      "title": "15. Escala manual",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": false,
+          "ref_level_dbm": -40.0,
+          "ref_range_db": 80.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": false,
+          "ref_level_dbm": -40.0,
+          "ref_range_db": 80.0,
+          "lna_gain_db": 16,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — validación visual pendiente del operador."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:13:44.468763+00:00"
+    },
+    "rf_gain_lna": {
+      "step_id": "rf_gain_lna",
+      "index": 15,
+      "title": "16. Cambio LNA",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": -36.0,
+          "ref_range_db": 80.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": -36.0,
+          "ref_range_db": 80.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 34,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:13:58.368382+00:00"
+    },
+    "rf_gain_vga": {
+      "step_id": "rf_gain_vga",
+      "index": 16,
+      "title": "17. Cambio VGA",
+      "user_verdict": "pass",
+      "backend_passed": true,
+      "user_comment": "",
+      "backend_analysis": {
+        "backend_passed": true,
+        "chain_passed": true,
+        "step_checks_passed": true,
+        "expected": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": -36.0,
+          "ref_range_db": 80.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 16,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "actual": {
+          "capture_mode": "iq",
+          "span_mhz": 10.0,
+          "sample_rate_mhz": 10.0,
+          "rbw_khz": 9.765625,
+          "fft_size": 1024,
+          "fft_auto": true,
+          "rbw_auto": true,
+          "sweep_auto": true,
+          "sweep_ms": 305.0,
+          "ref_scale_auto": true,
+          "ref_level_dbm": -36.0,
+          "ref_range_db": 80.0,
+          "lna_gain_db": 32,
+          "vga_gain_db": 16,
+          "center_mhz": 97.5,
+          "source_id": "hackrf"
+        },
+        "mismatches": [],
+        "failed_checks": [],
+        "warnings": [],
+        "hints": [],
+        "diagnosis": [
+          "Backend OK — parámetros y cadena coherentes."
+        ],
+        "metrics": {
+          "display_span_mhz": 10.0,
+          "effective_rbw_hz": 9765.625,
+          "policy_capture_mode": "iq"
+        }
+      },
+      "coherence": {
+        "coherent": true,
+        "issues": [],
+        "comment_analysis": {
+          "empty": true,
+          "tags": [],
+          "length": 0
+        }
+      },
+      "recorded_at": "2026-06-19T17:14:18.051689+00:00"
+    }
+  }
+}

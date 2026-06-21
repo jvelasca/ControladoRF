@@ -1,0 +1,26 @@
+# Entorno y caches
+env/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Build / distribucion
+build/
+dist/
+*.spec
+Documents/distribuciones python/
+
+# Herramientas RF (descargadas localmente)
+tools/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini
+
+# Logs locales
+*.log

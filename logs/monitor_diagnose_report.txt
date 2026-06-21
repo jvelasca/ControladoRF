@@ -1,0 +1,41 @@
+Monitor diagnose report — 2026-06-18T21:00:45
+flow_log: C:\Users\josea\Documents\Informatica\Python\ControladoRF\ControladoRF V1\ControladoRF V1\logs\monitor_flow.log
+
+=== Resumen log ===
+Líneas analizadas: 600
+Eventos: {'reconfigure': 236, 'apply_params': 241, 'iq_peak': 123}
+
+=== Cambios HW / apply_params ===
+2026-06-18 20:33:56.186 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[vga_gain_db=10->16] | UI[(ninguno)]
+2026-06-18 20:33:56.228 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[vga_gain_db=16->18] | UI[(ninguno)]
+2026-06-18 20:33:56.284 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[vga_gain_db=18->20] | UI[(ninguno)]
+2026-06-18 20:33:57.144 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[vga_gain_db=20->18] | UI[ref_level_dbm=-37.824621144586764->-38.89803794741476]
+2026-06-18 20:33:57.205 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[vga_gain_db=18->16] | UI[ref_range_db=100.0->80.0, ref_level_dbm=-35.3274705396518->-38.89803794741476]
+2026-06-18 20:33:57.267 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[vga_gain_db=16->14] | UI[(ninguno)]
+2026-06-18 20:33:59.977 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=32->24] | UI[ref_level_dbm=-34.61256017139312->-38.89803794741476]
+2026-06-18 20:34:00.076 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=24->16] | UI[(ninguno)]
+2026-06-18 20:34:01.127 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=16->8] | UI[ref_range_db=60.0->80.0, ref_level_dbm=-43.584105739688255->-38.89803794741476]
+2026-06-18 20:34:01.751 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=8->16] | UI[ref_range_db=60.0->80.0, ref_level_dbm=-41.55846884940419->-38.89803794741476]
+2026-06-18 20:34:01.821 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=16->24] | UI[ref_range_db=60.0->80.0, ref_level_dbm=-39.57475162578564->-38.89803794741476]
+2026-06-18 20:34:02.466 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=24->32] | UI[ref_level_dbm=-35.833488701082736->-38.89803794741476]
+2026-06-18 20:34:03.169 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=32->40] | UI[ref_level_dbm=-43.77458309170169->-38.89803794741476]
+2026-06-18 20:34:04.159 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=40->32] | UI[ref_range_db=100.0->80.0, ref_level_dbm=-36.38805646972607->-38.89803794741476]
+2026-06-18 20:34:05.004 [INFO] apply_params source=dock_sliders running=True reconfigure=True | HW[lna_gain_db=32->40] | UI[ref_level_dbm=-41.70457522877205->-38.89803794741476]
+
+=== Últimos picos IQ ===
+2026-06-18 20:33:35.199 [INFO] iq_peak source=hackrf peak_mhz=93.101 fc_mhz=93.200 lna=40 vga=18 rate_mhz=2.00
+2026-06-18 20:33:40.206 [INFO] iq_peak source=hackrf peak_mhz=105.227 fc_mhz=105.200 lna=40 vga=18 rate_mhz=2.00
+2026-06-18 20:33:45.222 [INFO] iq_peak source=hackrf peak_mhz=104.589 fc_mhz=105.200 lna=8 vga=18 rate_mhz=2.00
+2026-06-18 20:33:50.224 [INFO] iq_peak source=hackrf peak_mhz=105.225 fc_mhz=105.200 lna=32 vga=18 rate_mhz=2.00
+2026-06-18 20:33:55.250 [INFO] iq_peak source=hackrf peak_mhz=105.175 fc_mhz=105.200 lna=32 vga=28 rate_mhz=2.00
+2026-06-18 20:34:00.265 [INFO] iq_peak source=hackrf peak_mhz=104.479 fc_mhz=105.200 lna=16 vga=14 rate_mhz=2.00
+2026-06-18 20:34:05.281 [INFO] iq_peak source=hackrf peak_mhz=105.239 fc_mhz=105.200 lna=40 vga=14 rate_mhz=2.00
+2026-06-18 20:34:10.299 [INFO] iq_peak source=hackrf peak_mhz=105.175 fc_mhz=105.200 lna=40 vga=14 rate_mhz=2.00
+
+=== Demod WFM (simulación offline) ===
+demod_sim: pcm_rate=142755 target=48000 ratio=2.974
+demod_sim: level_dbfs min=-41.6 max=-41.6 last=-41.6 stereo=True
+
+=== Interpretación ===
+- Muchos reconfigure: parámetros UI cambian HW en bucle.
+- Repite prueba y ejecuta de nuevo este script con --tail 800.

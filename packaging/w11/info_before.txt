@@ -1,0 +1,14 @@
+Bienvenido al asistente de instalación de CONTROLADORF.
+
+Esta aplicación permite monitorizar y gestionar señales RF con HackRF One.
+
+Antes de usar el monitor SDR:
+  • Conecte el HackRF One por USB.
+  • Si es la primera vez en este PC, instale el driver WinUSB con Zadig:
+    https://zadig.akeo.ie/
+    (Options → List All Devices → HackRF One → WinUSB)
+
+Los proyectos y datos de usuario se guardan en:
+  Documentos\ControladoRF\
+
+Pulse Siguiente para continuar.
