@@ -77,12 +77,9 @@ def operator_intent_from_params(params: SpectrumParams) -> OperatorIntent:
         ref_offset_db=float(params.ref_offset_db),
     )
     source = params.source_id or "mock"
-    if source == "mock":
-        base = "mock"
-    elif source.startswith("hackrf"):
-        base = "hackrf"
-    else:
-        base = source.split("_")[0]
+    from core.rf.source_ids import parse_source_id
+
+    base = parse_source_id(source).device_id
     return OperatorIntent(
         window=frequency_window_from_params(params),
         operating_mode=mode,

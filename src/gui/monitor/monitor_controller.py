@@ -80,8 +80,6 @@ class MonitorController(QObject):
         self._last_auto_ref_emit = 0.0
         self._auto_ref_smooth: tuple[float, float] | None = None
         self._last_rf_metrics_emit = 0.0
-        self._last_squelch_rf_ui = 0.0
-        self._last_squelch_rf_value: float | None = None
         self._last_status_peak_emit = 0.0
         self._trace_update_armed = True
         self._trigger_timer = QTimer(self)
@@ -113,10 +111,13 @@ class MonitorController(QObject):
         self._marker_drag_active = False
         self._apply_params_busy = False
         self._pending_apply_params: SpectrumParams | None = None
+        self._auto_tune_busy = False
         self._project_params_lock = threading.Lock()
         self._project_params = self._engine.params.copy()
         self._get_project_manager = None
         self._get_database_service = None
+        self._get_channelization_service = None
+        self._toolbar_ref = None
         self._supervision_event_store = None
         self._supervision_state = None
         self._supervision_engine = None
@@ -150,7 +151,8 @@ class MonitorController(QObject):
         self.status_changed.connect(self._on_status_message)
         config.source_changed.connect(self._on_config_source_changed)
         config.set_transport_busy_callback(self.is_transport_busy)
-        config.demod_params_changed.connect(self.apply_params)
+        config.demod_params_changed.connect(self._apply_demod_params_from_panel)
+        config.radio_soft_param_patch.connect(self._apply_soft_param_patch)
         config.audio_volume_changed.connect(self.apply_audio_volume)
         config.recorder_params_changed.connect(self.apply_params)
         config.markers_params_changed.connect(self.apply_params)
@@ -173,7 +175,6 @@ class MonitorController(QObject):
         config.clear_reference_bulk_requested.connect(self._on_clear_reference_bulk)
         config.record_toggled.connect(self._on_record_toggled)
         config.auto_tune_requested.connect(self.auto_tune_sdr)
-        config.fm_broadcast_requested.connect(self.apply_fm_broadcast_preset)
         config.welle_cli_requested.connect(self.launch_welle_cli_sdr)
         config.mode_restriction.connect(self._notify_mode_restriction)
         self.operating_mode_changed.connect(config.set_operating_mode)
@@ -211,6 +212,18 @@ class MonitorController(QObject):
     def bind_database(self, get_database_service) -> None:
         self._get_database_service = get_database_service
         self._sync_supervision_event_store()
+
+    def bind_channelization(self, get_channelization_service) -> None:
+        self._get_channelization_service = get_channelization_service
+        self.refresh_channelization_ui()
+
+    def refresh_channelization_ui(self) -> None:
+        svc = self._get_channelization_service() if self._get_channelization_service else None
+        if self._toolbar_ref is not None and hasattr(self._toolbar_ref, "set_channelization_service"):
+            self._toolbar_ref.set_channelization_service(svc)
+        if hasattr(self._spectrum, "set_channelization_service"):
+            self._spectrum.set_channelization_service(svc)
+        self.toolbar_sync_requested.emit(self.get_params())
 
     def _project_equipos(self) -> list:
         pm = self._get_project_manager() if self._get_project_manager else None
@@ -1434,6 +1447,19 @@ class MonitorController(QObject):
         if self._on_layout_persist is not None:
             self._on_layout_persist()
 
+    def flush_layout_persist(self) -> None:
+        """Ejecuta de inmediato la persistencia de layout (cancela el debounce)."""
+        if self._layout_persist_timer.isActive():
+            self._layout_persist_timer.stop()
+        self._run_layout_persist()
+
+    def flush_persisted_state(self) -> None:
+        """Consolida parámetros pendientes antes de serializar (sin re-disparar layout)."""
+        pending = self._pending_apply_params
+        if pending is not None:
+            self._sync_persisted_radio_params_immediate(pending)
+        self._layout_persist_timer.stop()
+
     def _flush_marker_trace(self) -> None:
         pending = self._pending_marker_trace
         if pending is None:
@@ -1502,6 +1528,7 @@ class MonitorController(QObject):
         self.set_source(source_id)
 
     def bind_toolbar(self, toolbar) -> None:
+        self._toolbar_ref = toolbar
         self._spectrum.sliders.bind_toolbar(toolbar)
         span = getattr(toolbar, "_span", None)
         if span is not None and hasattr(span, "bind_mode_warning"):
@@ -1516,16 +1543,24 @@ class MonitorController(QObject):
         self.status_changed.emit(msg)
         self._spectrum.set_alert_message(msg, tone="warn")
 
+    def _notify_mode_restriction_from_key(self, i18n_key: str) -> None:
+        from core.monitor.monitor_mode_guard import ModeRestriction
+
+        self._notify_mode_restriction(ModeRestriction(i18n_key))
+
     def _prepare_source_for_start(self, source_id: str) -> None:
         if self._engine.is_running or self._engine.is_connecting:
             return
-        base_id = source_id.split("_")[0] if source_id.startswith("hackrf") else source_id
         if (
-            self.get_params().source_id != base_id
-            or self._engine.source_impl_id != base_id
+            self.get_params().source_id != source_id
+            or self._engine.source_impl_id != source_id
         ):
             _ok, msg = self._engine.set_source(source_id)
             updated = self.get_params().copy()
+            updated.source_id = source_id
+            from core.rf.source_profile import apply_analyzer_source_restrictions
+
+            apply_analyzer_source_restrictions(updated)
             updated.max_span_hz = max_span_hz_for_source(
                 source_id,
                 operating_mode=updated.operating_mode,
@@ -1536,12 +1571,16 @@ class MonitorController(QObject):
             self._config.set_status_message(msg)
 
     def _apply_params_from_dock_sliders(self, params: SpectrumParams) -> None:
+        from core.monitor.monitor_flow_log import RF_GAIN_PARAM_KEYS, changed_param_key_names
+
         merged = self.get_params().copy()
-        for key in (
+        gain_keys = (
             "lna_gain_db",
             "vga_gain_db",
             "rf_amp_enable",
             "rf_attenuation_db",
+        )
+        display_keys = (
             "ref_level_dbm",
             "ref_range_db",
             "ref_scale_auto",
@@ -1549,8 +1588,13 @@ class MonitorController(QObject):
             "vertical_divisions",
             "ref_offset_db",
             "amplitude_unit",
-        ):
+        )
+        for key in gain_keys + display_keys:
             setattr(merged, key, getattr(params, key))
+        changed = changed_param_key_names(self.get_params(), merged, gain_keys + display_keys)
+        if changed and all(key in RF_GAIN_PARAM_KEYS for key in changed):
+            self.apply_rf_gain_params(merged)
+            return
         self.apply_params(merged)
         self.toolbar_sync_requested.emit(self.get_params())
 
@@ -1661,7 +1705,81 @@ class MonitorController(QObject):
         sync_selected_freq_from_active_marker(updated)
         self.apply_params(updated)
 
+    def apply_toolbar_params(self, toolbar_params: SpectrumParams) -> None:
+        """Fusiona solo los campos que cambió la toolbar (evita pisar FC/VFO vivos)."""
+        from core.monitor.monitor_flow_log import (
+            RF_GAIN_PARAM_KEYS,
+            TOOLBAR_PARAM_KEYS,
+            changed_param_key_names,
+            is_sdr_rf_gain_only_patch,
+        )
+
+        current = self.get_params()
+        keys = changed_param_key_names(current, toolbar_params, TOOLBAR_PARAM_KEYS)
+        if not keys:
+            return
+        merged = current.copy()
+        for key in keys:
+            setattr(merged, key, getattr(toolbar_params, key))
+        if is_sdr_rf_gain_only_patch(current, merged) and all(
+            key in RF_GAIN_PARAM_KEYS for key in keys
+        ):
+            self.apply_rf_gain_params(merged)
+            return
+        self.apply_params(merged)
+
+    def apply_rf_gain_params(self, source: SpectrumParams) -> None:
+        """LNA/VGA/P sin refrescar panel RADIO ni reiniciar demodulación."""
+        from core.monitor.hackrf_rx_gains import snap_gains_for_source
+        from core.monitor.monitor_flow_log import RF_GAIN_PARAM_KEYS, changed_param_key_names
+        from i18n.json_translation import tr
+
+        prev = self.get_params()
+        keys = changed_param_key_names(prev, source, RF_GAIN_PARAM_KEYS)
+        if not keys:
+            return
+        updated = prev.copy()
+        for key in keys:
+            setattr(updated, key, getattr(source, key))
+        lna, vga, amp, warn_key = snap_gains_for_source(
+            updated.source_id,
+            updated.lna_gain_db,
+            updated.vga_gain_db,
+            updated.rf_amp_enable,
+        )
+        updated.lna_gain_db = lna
+        updated.vga_gain_db = vga
+        updated.rf_amp_enable = amp
+        if updated.capture_mode == "sweep" or updated.operating_mode_enum() is MonitorOperatingMode.SDR:
+            updated.rf_attenuation_db = max(0.0, 40.0 - updated.lna_gain_db)
+        if warn_key:
+            msg = tr(warn_key).format(
+                lna=int(updated.lna_gain_db),
+                vga=int(updated.vga_gain_db),
+                sum_db=int(updated.lna_gain_db) + int(updated.vga_gain_db),
+            )
+            self.status_changed.emit(msg)
+            self._spectrum.set_alert_message(msg, tone="warn")
+        with self._project_params_lock:
+            self._project_params = updated.copy()
+        self._rf_view_model.apply_params(updated)
+        self.toolbar_sync_requested.emit(updated)
+        self._schedule_layout_persist()
+
+    def _ensure_sdr_audio_receive(self, params: SpectrumParams) -> None:
+        """Mantiene audio/demod activos en SDR IQ analógico (no pisa modo DIG)."""
+        from core.monitor.analog_demod_profiles import normalize_analog_demod_mode
+
+        if not params.operating_mode_enum().demod_enabled():
+            return
+        if params.capture_mode != "iq":
+            return
+        if normalize_analog_demod_mode(params.demod_mode) == "dig":
+            return
+        params.audio_enabled = True
+
     def apply_params(self, params: SpectrumParams) -> None:
+        self._sync_persisted_radio_params_immediate(params)
         if self._apply_params_busy:
             self._pending_apply_params = params.copy()
             return
@@ -1684,14 +1802,132 @@ class MonitorController(QObject):
             if pending is not None:
                 self.apply_params(pending)
 
+    def _sync_persisted_radio_params_immediate(self, params: SpectrumParams) -> None:
+        """Refleja mute/volumen/demod en _project_params al instante."""
+        from core.monitor.monitor_flow_log import PERSIST_RADIO_UI_KEYS
+
+        with self._project_params_lock:
+            current = self._project_params.copy()
+            for key in PERSIST_RADIO_UI_KEYS:
+                if hasattr(params, key) and hasattr(current, key):
+                    setattr(current, key, getattr(params, key))
+            self._project_params = current
+        self._engine.set_params(
+            squelch_db=float(params.squelch_db),
+            squelch_enabled=bool(params.squelch_enabled),
+        )
+
+    def _apply_demod_params_from_panel(self, panel_params: SpectrumParams) -> None:
+        """Fusiona campos RADIO del panel sin pisar modo/captura/audio vivo."""
+        from core.monitor.monitor_flow_log import (
+            RADIO_PANEL_PATCH_KEYS,
+            RADIO_SOFT_PARAM_KEYS,
+            changed_param_key_names,
+        )
+
+        prev = self.get_params()
+        changed = changed_param_key_names(prev, panel_params, RADIO_PANEL_PATCH_KEYS)
+        if not changed:
+            return
+        merged = prev.copy()
+        for key in changed:
+            setattr(merged, key, getattr(panel_params, key))
+        if all(key in RADIO_SOFT_PARAM_KEYS for key in changed):
+            self._apply_radio_soft_params(merged, prev, changed)
+            return
+        self.apply_params(merged)
+
+    def _apply_soft_param_patch(self, patch: object) -> None:
+        """Toggles WFM/RADIO — solo las claves del dict, nunca el estado obsoleto del panel."""
+        if not isinstance(patch, dict) or not patch:
+            return
+        from core.monitor.monitor_flow_log import (
+            RF_GAIN_PARAM_KEYS,
+            RADIO_SOFT_PARAM_KEYS,
+        )
+
+        prev = self.get_params()
+        merged = prev.copy()
+        for key, value in patch.items():
+            if hasattr(merged, key):
+                setattr(merged, key, value)
+        changed = [str(key) for key in patch if hasattr(merged, key)]
+        if not changed:
+            return
+        if any(key not in RADIO_SOFT_PARAM_KEYS and key not in RF_GAIN_PARAM_KEYS for key in changed):
+            self.apply_params(merged)
+            return
+        if any(key in RF_GAIN_PARAM_KEYS for key in changed):
+            self.apply_rf_gain_params(merged)
+            prev = self.get_params()
+            merged = prev.copy()
+            for key, value in patch.items():
+                if hasattr(merged, key):
+                    setattr(merged, key, value)
+        soft_keys = [key for key in changed if key in RADIO_SOFT_PARAM_KEYS]
+        if soft_keys:
+            self._apply_radio_soft_params(merged, prev, soft_keys)
+        self._config.sync_radio_params_snapshot(self.get_params())
+
+    def _apply_radio_soft_params(
+        self,
+        merged: SpectrumParams,
+        prev: SpectrumParams,
+        changed: list[str],
+    ) -> None:
+        """Mute/squelch/toggles WFM sin reconfigurar captura ni reconstruir waterfall."""
+        from PyQt6.QtCore import QTimer
+
+        with self._project_params_lock:
+            self._project_params = merged.copy()
+        self._engine.set_params(
+            squelch_db=float(merged.squelch_db),
+            squelch_enabled=bool(merged.squelch_enabled),
+        )
+        self._audio_out.set_volume(merged.audio_volume)
+        demod_chain_keys = {
+            "demod_wfm_stereo",
+            "demod_wfm_lowpass",
+            "demod_noise_blanker_db",
+            "demod_deemphasis",
+            "demod_iq_correction",
+            "demod_iq_invert",
+            "demod_agc_attack",
+            "demod_agc_decay",
+            "demod_bandwidth_hz",
+        }
+        if self._rf_runner.is_running and self._engine.is_demod_auxiliary and any(
+            key in demod_chain_keys for key in changed
+        ):
+            self._engine.reset_demod_signal_chain()
+        if (
+            "demod_wfm_stereo" in changed
+            and prev.demod_wfm_stereo != merged.demod_wfm_stereo
+            and self._audio_out.is_active
+        ):
+            wfm = (merged.demod_mode or "").lower() in ("wfm", "fm")
+            stereo = bool(merged.demod_wfm_stereo and wfm)
+            QTimer.singleShot(0, lambda s=stereo: self._restart_demod_audio_channels(s))
+        if "demod_bandwidth_hz" in changed:
+            self._spectrum.set_analyzer_params(merged)
+        if "show_demod_bandwidth" in changed:
+            self._spectrum.set_analyzer_params(merged)
+        if "freq_readout" in changed or "demod_snap_interval" in changed:
+            self._spectrum.set_analyzer_params(merged)
+        self._config.sync_radio_bandwidth_ui(merged)
+        if changed != ["demod_wfm_rds"]:
+            self._schedule_layout_persist()
+
     def apply_audio_volume(self, volume: float) -> None:
         """Solo volumen de audio — sin repintar espectro ni reconfigurar captura."""
         clamped = max(0.0, min(1.0, float(volume)))
         current = self.get_params()
         if abs(current.audio_volume - clamped) < 0.001:
             return
-        updated = current.copy()
-        updated.audio_volume = clamped
+        with self._project_params_lock:
+            updated = self._project_params.copy()
+            updated.audio_volume = clamped
+            self._project_params = updated
         self._engine.set_params(audio_volume=clamped)
         self._audio_out.set_volume(clamped)
         self._config.set_radio_audio_volume(clamped)
@@ -1709,6 +1945,13 @@ class MonitorController(QObject):
 
         prev = self.get_params()
         updated = params.copy()
+        ch_svc = self._get_channelization_service() if self._get_channelization_service else None
+        if ch_svc is not None and updated.freq_input_mode != prev.freq_input_mode:
+            state = ch_svc.get_state()
+            state.input_mode = updated.freq_input_mode
+            state.show_spectrum_allocations = updated.freq_input_mode == "channel"
+            ch_svc.save_state(state)
+            self.refresh_channelization_ui()
         gain_only_sdr = is_sdr_rf_gain_only_patch(prev, params)
         from core.monitor.hackrf_rx_gains import snap_gains_for_source
         from i18n.json_translation import tr
@@ -1820,6 +2063,7 @@ class MonitorController(QObject):
             triggers_reconfigure=bool(hardware_changes) and self._rf_runner.is_running,
             running=self._engine.is_running or self._rf_runner.is_running,
         )
+        self._ensure_sdr_audio_receive(updated)
         with self._project_params_lock:
             self._project_params = updated.copy()
         self._engine.set_params(
@@ -1878,6 +2122,7 @@ class MonitorController(QObject):
             demod_agc_attack=updated.demod_agc_attack,
             demod_agc_decay=updated.demod_agc_decay,
             squelch_db=updated.squelch_db,
+            squelch_enabled=updated.squelch_enabled,
             show_demod_bandwidth=updated.show_demod_bandwidth,
             recorder_mode=updated.recorder_mode,
             recorder_directory=updated.recorder_directory,
@@ -1935,14 +2180,14 @@ class MonitorController(QObject):
             markers=[marker.copy() for marker in updated.markers],
         )
         if self._rf_runner.is_running and self._engine.is_demod_auxiliary and hardware_changes:
-            from core.monitor.monitor_flow_log import RF_GAIN_PARAM_KEYS
+            from core.monitor.monitor_flow_log import RF_GAIN_PARAM_KEYS, changed_param_key_names
 
-            if any(key in RF_GAIN_PARAM_KEYS for key in hardware_changes):
+            hw_keys = changed_param_key_names(prev, updated, HARDWARE_PARAM_KEYS)
+            if any(key not in RF_GAIN_PARAM_KEYS for key in hw_keys):
                 self._engine.reset_demod_signal_chain()
         current = updated.copy()
         demod_chain_keys = (
             "demod_wfm_stereo",
-            "demod_wfm_rds",
             "demod_wfm_lowpass",
             "demod_noise_blanker_db",
             "demod_mode",
@@ -1955,7 +2200,8 @@ class MonitorController(QObject):
             self._engine.reset_demod_signal_chain()
         if prev.demod_wfm_stereo != current.demod_wfm_stereo and self._audio_out.is_active:
             wfm = (current.demod_mode or "").lower() in ("wfm", "fm")
-            self._audio_out.start(stereo=bool(current.demod_wfm_stereo and wfm))
+            stereo = bool(current.demod_wfm_stereo and wfm)
+            QTimer.singleShot(0, lambda s=stereo: self._restart_demod_audio_channels(s))
         if prev.ref_scale_auto != current.ref_scale_auto:
             self._auto_ref_smooth = None
         if prev.capture_mode != current.capture_mode:
@@ -1970,10 +2216,12 @@ class MonitorController(QObject):
                     )
         if current.trace_mode != prev_trace:
             self._rf_view_model.reset_trace_state()
-        if current.fft_size != prev_fft_size or current.fft_auto != prev_fft_auto:
+        if current.fft_size != prev_fft_size:
             self._rf_view_model.reset_trace_state()
             if current.capture_mode == "iq":
                 self._waterfall.clear_history()
+        elif current.fft_auto != prev_fft_auto and current.capture_mode == "iq":
+            self._rf_view_model.reset_trace_state()
         if (
             current.trace_smooth_auto != prev_smooth_auto
             or current.trace_smooth_bins != prev_smooth_bins
@@ -2010,6 +2258,12 @@ class MonitorController(QObject):
             )
             self._config.update_audio_output(active=True)
         self.params_updated.emit(current)
+        if (
+            prev.freq_input_mode != current.freq_input_mode
+            or abs(float(prev.center_freq_hz) - float(current.center_freq_hz)) > 0.5
+            or abs(float(prev.selected_freq_hz) - float(current.selected_freq_hz)) > 0.5
+        ):
+            self.toolbar_sync_requested.emit(current)
         if not self._marker_drag_active:
             self._config.set_monitor_params(current, prev=prev)
         self._schedule_layout_persist()
@@ -2054,6 +2308,12 @@ class MonitorController(QObject):
         previous = normalize_operating_mode(updated.operating_mode)
         normalized = normalize_operating_mode(mode)
         if previous == normalized:
+            return
+        from core.monitor.monitor_mode_guard import sdr_mode_blocked_for_source
+
+        blocked = sdr_mode_blocked_for_source(updated)
+        if blocked is not None and normalized is MonitorOperatingMode.SDR:
+            self._notify_mode_restriction(blocked)
             return
         updated.operating_mode = normalized.value
         if normalized is MonitorOperatingMode.SDR:
@@ -2107,6 +2367,16 @@ class MonitorController(QObject):
 
     def _on_spectrum_frequency(self, freq_hz: float) -> None:
         params = self.get_params()
+        if params.freq_input_mode == "channel":
+            ch_svc = (
+                self._get_channelization_service()
+                if self._get_channelization_service
+                else None
+            )
+            if ch_svc is not None:
+                from core.rf.channel_input import snap_channel_frequency
+
+                freq_hz = snap_channel_frequency(ch_svc, freq_hz)
         if params.freq_readout == "f":
             updated = patch_selected_freq(params, freq_hz, clamp_visible=True)
         else:
@@ -2128,31 +2398,45 @@ class MonitorController(QObject):
     def start(self) -> None:
         self._user_stop_requested = False
         self._start_guard_until = time.monotonic() + 4.0
-        from core.monitor.device_discovery import detect_sources
+        from core.monitor.device_discovery import detect_sources, prefer_playable_source_id
 
         source_id = self._config.get_selected_source_id()
+        descriptors = detect_sources()
         if not source_id or source_id == "mock":
-            for item in detect_sources():
-                if item.source_id != "mock" and item.available:
-                    source_id = item.source_id
-                    break
+            picked = prefer_playable_source_id(descriptors=descriptors)
+            if picked != "mock":
+                source_id = picked
         if source_id:
             self._prepare_source_for_start(source_id)
         self._rf_view_model.reset_trace_state()
         self._waterfall.clear_history()
         preflight = self.get_params().copy()
-        if source_id and preflight.source_id == "mock":
-            preflight.source_id = source_id.split("_")[0] if source_id.startswith("hackrf") else source_id
+        if source_id:
+            preflight.source_id = source_id
+            from core.rf.source_profile import apply_analyzer_source_restrictions
+
+            apply_analyzer_source_restrictions(preflight)
         refresh_capture_and_span_limits(preflight)
-        if preflight.capture_mode == "iq":
+        if preflight.operating_mode_enum().demod_enabled():
+            from core.monitor.analog_demod_profiles import normalize_analog_demod_mode, snap_vfo_freq_hz
+
+            preflight.capture_mode = "iq"
+            preflight.freq_readout = "f"
+            preflight.audio_enabled = True
+            preflight.show_demod_bandwidth = True
+            preflight.sync_receive_mode_effects()
+            if normalize_analog_demod_mode(preflight.demod_mode) in ("wfm", "fm", "nfm"):
+                if float(preflight.demod_bandwidth_hz or 0) < 100_000.0:
+                    preflight.demod_bandwidth_hz = 200_000.0
+            tune_hz = float(preflight.selected_freq_hz or 0.0)
+            if tune_hz <= 0.0:
+                tune_hz = float(preflight.vfo_freq_hz or preflight.center_freq_hz)
+            preflight.vfo_freq_hz = snap_vfo_freq_hz(tune_hz, preflight.demod_snap_interval)
+            preflight.selected_freq_hz = preflight.vfo_freq_hz
+            preflight.squelch_db = min(float(preflight.squelch_db), -100.0)
             from core.monitor.iq_sdr_profile import prepare_iq_for_play
 
             prepare_iq_for_play(preflight)
-            if preflight.operating_mode_enum().demod_enabled():
-                preflight.audio_enabled = True
-                preflight.squelch_db = min(preflight.squelch_db, -100.0)
-                self._pending_vfo_peak_snap = True
-                self._vfo_snap_warmup_frames = 20
         self.apply_params(preflight)
         self._config.set_controls_busy(connecting=True, running=False)
         self.transport_changed.emit(False, True)
@@ -2160,14 +2444,33 @@ class MonitorController(QObject):
         release = getattr(self._engine, "release_hardware", None)
         if callable(release):
             release()
+        if self._engine.is_demod_auxiliary or self._engine.is_running:
+            self._engine.stop()
         self._rf_runner.sync_from_params(self.get_params())
         ok, msg = self._rf_runner.start()
         if ok:
             params = self.get_params()
             if params.demod_enabled() or params.digital_analysis_active():
                 tap = self._rf_runner.create_demod_iq_source()
-                if tap is not None:
-                    self._engine.start_demod_auxiliary(tap)
+                if tap is None and params.demod_enabled():
+                    from i18n.json_translation import tr
+
+                    self.status_changed.emit(tr("monitor_demod_iq_tap_unavailable"))
+                elif tap is not None:
+                    self._engine.start_demod_auxiliary(tap, get_params=self.get_params)
+            if params.demod_enabled():
+                stereo = bool(
+                    params.demod_wfm_stereo
+                    and (params.demod_mode or "").lower() in ("wfm", "fm")
+                )
+                if not self._audio_out.is_active:
+                    if self._audio_out.start(stereo=stereo):
+                        self._audio_out.set_volume(params.audio_volume)
+                        self._config.update_audio_output(active=True)
+                else:
+                    self._audio_out.set_volume(params.audio_volume)
+            self._config.sync_radio_bandwidth_ui(params)
+            self._spectrum.set_analyzer_params(params)
         if ok:
             self._last_frame_at = time.monotonic()
             self._frame_watchdog.start()
@@ -2214,11 +2517,14 @@ class MonitorController(QObject):
         if self.is_transport_busy():
             return
         current = self.get_params().source_id
-        base_id = source_id.split("_")[0] if source_id.startswith("hackrf") else source_id
-        if current == base_id:
+        if current == source_id:
             return
         _ok, msg = self._engine.set_source(source_id)
         updated = self.get_params().copy()
+        updated.source_id = source_id
+        from core.rf.source_profile import analyzer_source_status_hint, apply_analyzer_source_restrictions
+
+        notices = apply_analyzer_source_restrictions(updated)
         updated.max_span_hz = max_span_hz_for_source(
             source_id,
             operating_mode=updated.operating_mode,
@@ -2228,6 +2534,15 @@ class MonitorController(QObject):
         self.apply_params(updated)
         self._config.set_status_message(msg)
         self.status_changed.emit(msg)
+        self.toolbar_sync_requested.emit(self.get_params())
+        self.operating_mode_changed.emit(updated.operating_mode)
+        from i18n.json_translation import tr
+
+        for key in notices:
+            self._notify_mode_restriction_from_key(key)
+        hint = analyzer_source_status_hint(source_id)
+        if hint:
+            self.status_changed.emit(tr(hint))
 
     def shutdown(self) -> None:
         if self._supervision_engine is not None and self._supervision_engine.is_recording:
@@ -2371,38 +2686,107 @@ class MonitorController(QObject):
         self._config.set_monitor_params(params)
         self._sync_recorder_ui()
 
-    def apply_fm_broadcast_preset(self) -> None:
-        from core.monitor.wfm_broadcast_profile import apply_fm_broadcast_preset
-        from i18n.json_translation import tr
-
-        updated = apply_fm_broadcast_preset(self.get_params())
-        from core.monitor.monitor_flow_log import log_diagnose_marker
-
-        log_diagnose_marker(
-            f"fm_broadcast fc_mhz={updated.center_freq_hz / 1e6:.3f} "
-            f"lna={updated.lna_gain_db} vga={updated.vga_gain_db}"
-        )
-        self.apply_params(updated)
-        self.status_changed.emit(tr("monitor_fm_broadcast_applied"))
-
     def auto_tune_sdr(self) -> None:
+        if self._auto_tune_busy:
+            return
+        self._auto_tune_busy = True
+        from PyQt6.QtCore import QTimer
+
+        QTimer.singleShot(0, self._run_auto_tune_sdr)
+
+    def _run_auto_tune_sdr(self) -> None:
         from core.monitor.sdr_auto_tune import compute_sdr_auto_tune
         from i18n.json_translation import tr
 
-        result = compute_sdr_auto_tune(self.get_params(), self.get_last_frame())
-        if not result.ok:
-            key = result.summary
-            msg = tr(key) if key.startswith("monitor_") else key
-            self.status_changed.emit(msg)
-            if key == "monitor_auto_tune_not_sdr":
-                from core.monitor.monitor_mode_guard import demod_requires_sdr_mode
+        try:
+            result = compute_sdr_auto_tune(self.get_params(), self.get_last_frame())
+            if not result.ok:
+                key = result.summary
+                msg = tr(key) if key.startswith("monitor_") else key
+                self.status_changed.emit(msg)
+                if key == "monitor_auto_tune_not_sdr":
+                    from core.monitor.monitor_mode_guard import demod_requires_sdr_mode
 
-                notice = demod_requires_sdr_mode(self.get_params())
-                if notice is not None:
-                    self._notify_mode_restriction(notice)
+                    notice = demod_requires_sdr_mode(self.get_params())
+                    if notice is not None:
+                        self._notify_mode_restriction(notice)
+                return
+            self._apply_auto_tune_result(result.params)
+            self.status_changed.emit(result.summary)
+        finally:
+            self._auto_tune_busy = False
+
+    def _apply_auto_tune_result(self, tuned: SpectrumParams) -> None:
+        """Aplica AUTO sin bloquear la GUI con apply_params completo durante PLAY."""
+        from core.monitor.hackrf_rx_gains import snap_gains_for_source
+        from core.monitor.monitor_flow_log import is_auto_tune_hw_unchanged
+        from core.monitor.sdr_auto_tune import freeze_auto_tune_hw_for_live_capture, merge_auto_tune_params
+        from i18n.json_translation import tr
+
+        prev = self.get_params()
+        merged = merge_auto_tune_params(prev, tuned)
+        lna, vga, amp, warn_key = snap_gains_for_source(
+            merged.source_id,
+            merged.lna_gain_db,
+            merged.vga_gain_db,
+            merged.rf_amp_enable,
+        )
+        merged.lna_gain_db = lna
+        merged.vga_gain_db = vga
+        merged.rf_amp_enable = amp
+        if merged.capture_mode == "sweep" or merged.operating_mode_enum() is MonitorOperatingMode.SDR:
+            merged.rf_attenuation_db = max(0.0, 40.0 - merged.lna_gain_db)
+        if warn_key:
+            msg = tr(warn_key).format(
+                lna=int(merged.lna_gain_db),
+                vga=int(merged.vga_gain_db),
+                sum_db=int(merged.lna_gain_db) + int(merged.vga_gain_db),
+            )
+            self.status_changed.emit(msg)
+            self._spectrum.set_alert_message(msg, tone="warn")
+
+        if self._rf_runner.is_running or self._engine.is_running:
+            if not is_auto_tune_hw_unchanged(prev, merged):
+                merged = freeze_auto_tune_hw_for_live_capture(prev, merged)
+                self.status_changed.emit(tr("monitor_auto_tune_hw_deferred"))
+            self._apply_auto_tune_live(prev, merged)
             return
-        self.apply_params(result.params)
-        self.status_changed.emit(result.summary)
+        self.apply_params(merged)
+
+    def _apply_auto_tune_live(self, prev: SpectrumParams, merged: SpectrumParams) -> None:
+        """Ganancias + demod en vivo — sin prepare_params_for_capture ni waterfall."""
+        from core.monitor.monitor_flow_log import (
+            RF_GAIN_PARAM_KEYS,
+            RADIO_PANEL_PATCH_KEYS,
+            RADIO_SOFT_PARAM_KEYS,
+            changed_param_key_names,
+        )
+        from core.monitor.sdr_auto_tune import merge_auto_tune_params
+
+        gain_keys = changed_param_key_names(prev, merged, RF_GAIN_PARAM_KEYS)
+        if gain_keys:
+            self.apply_rf_gain_params(merged)
+            prev = self.get_params()
+            merged = merge_auto_tune_params(prev, merged)
+
+        patch_keys = changed_param_key_names(prev, merged, RADIO_PANEL_PATCH_KEYS)
+        soft_keys = [key for key in patch_keys if key in RADIO_SOFT_PARAM_KEYS]
+        if soft_keys:
+            self._apply_radio_soft_params(merged, prev, soft_keys)
+        else:
+            with self._project_params_lock:
+                self._project_params = merged.copy()
+            self._engine.set_params(
+                squelch_db=float(merged.squelch_db),
+                squelch_enabled=bool(merged.squelch_enabled),
+            )
+
+        current = self.get_params()
+        self._config.set_monitor_params(current, prev=prev)
+        self.toolbar_sync_requested.emit(current)
+        self._spectrum.set_analyzer_params(current)
+        self.params_updated.emit(current)
+        self._schedule_layout_persist()
 
     def launch_welle_cli_sdr(self) -> None:
         from PyQt6.QtCore import QUrl
@@ -2456,23 +2840,61 @@ class MonitorController(QObject):
 
     def _push_demod_pcm_direct(self, state) -> None:
         """Audio directo desde hilo demod (sin pasar por cola Qt)."""
-        if not self._engine.is_running:
+        if not self._engine.is_demod_auxiliary and not self._engine.is_running:
             return
         params = self.get_params()
         if not params.demod_enabled() or state.pcm.size <= 0:
             return
         if not self._audio_out.is_active:
-            return
+            stereo = bool(
+                getattr(state, "stereo", False)
+                or (
+                    params.demod_wfm_stereo
+                    and (params.demod_mode or "").lower() in ("wfm", "fm")
+                )
+            )
+            if self._audio_out.start(stereo=stereo):
+                self._audio_out.set_volume(params.audio_volume)
+                self._config.update_audio_output(active=True)
+            if not self._audio_out.is_active:
+                return
         if params.audio_muted:
             return
+        from core.monitor.demod_dsp import squelch_passes_audio
+
+        squelch_open = squelch_passes_audio(
+            squelch_enabled=bool(params.squelch_enabled),
+            squelch_db=float(params.squelch_db),
+            squelch_open=bool(state.squelch_open),
+        )
         self._audio_out.push_pcm(
             state.pcm,
-            squelch_open=state.squelch_open,
+            squelch_open=squelch_open,
             volume=params.audio_volume,
             stereo=bool(getattr(state, "stereo", False)),
         )
-        if self._recorder.is_active and self._recorder.mode == "audio" and state.squelch_open:
+        if self._recorder.is_active and self._recorder.mode == "audio" and squelch_open:
             self._recorder.write_pcm(state.pcm)
+
+    def _restart_demod_audio_channels(self, stereo: bool) -> None:
+        """Reconfigura mono/estéreo en el hilo GUI (QAudioSink no es thread-safe)."""
+        from i18n.json_translation import tr
+
+        params = self.get_params()
+        if not params.demod_enabled():
+            return
+        if not self._audio_out.is_active:
+            if not self._audio_out.restart(stereo=stereo):
+                err = self._audio_out.last_error or tr("monitor_radio_audio_error")
+                self._config.update_audio_output(active=False, error=err)
+                return
+        else:
+            if not self._audio_out.restart(stereo=stereo):
+                err = self._audio_out.last_error or tr("monitor_radio_audio_error")
+                self._config.update_audio_output(active=False, error=err)
+                return
+        self._audio_out.set_volume(params.audio_volume)
+        self._config.update_audio_output(active=True)
 
     def _on_demod_state(self, state) -> None:
         try:
@@ -2507,7 +2929,9 @@ class MonitorController(QObject):
 
     def _handle_demod_ui(self, state) -> None:
         params = self.get_params()
-        if not params.demod_enabled() or not self._engine.is_running:
+        if not params.demod_enabled():
+            return
+        if not (self._engine.is_running or self._engine.is_demod_auxiliary):
             return
         self._config.update_demod_display(state)
         self._config.update_demod_signal_level(getattr(state, "level_dbfs", None))
@@ -2602,14 +3026,16 @@ class MonitorController(QObject):
             self._spectrum.clear_alert_message()
         display = frame
         if params.ref_scale_auto:
-            alpha = 0.12
+            from core.rf.presentation.scale import stabilize_ref_level_dbm, stabilize_ref_range_db
+
             if self._auto_ref_smooth is None:
-                self._auto_ref_smooth = (display.ref_level_dbm, display.ref_range_db)
+                stable_rng = stabilize_ref_range_db(display.ref_range_db, None)
+                self._auto_ref_smooth = (display.ref_level_dbm, stable_rng)
             else:
                 prev_ref, prev_rng = self._auto_ref_smooth
-                smooth_ref = prev_ref * (1.0 - alpha) + display.ref_level_dbm * alpha
-                smooth_rng = prev_rng * (1.0 - alpha) + display.ref_range_db * alpha
-                self._auto_ref_smooth = (smooth_ref, smooth_rng)
+                stable_ref = stabilize_ref_level_dbm(display.ref_level_dbm, prev_ref)
+                stable_rng = stabilize_ref_range_db(display.ref_range_db, prev_rng)
+                self._auto_ref_smooth = (stable_ref, stable_rng)
             display = SpectrumFrame(
                 freqs_hz=display.freqs_hz,
                 power_db=display.power_db,
@@ -2625,6 +3051,11 @@ class MonitorController(QObject):
         self._last_display_frame = processed
         self._spectrum.update_frame(processed)
         self._waterfall.update_frame(processed)
+        if self._toolbar_ref is not None and hasattr(self._toolbar_ref, "set_live_display_scale"):
+            self._toolbar_ref.set_live_display_scale(
+                processed.ref_level_dbm,
+                processed.ref_range_db,
+            )
         import numpy as np
 
         self._pending_marker_trace = (
@@ -2675,16 +3106,7 @@ class MonitorController(QObject):
                 float(params.vfo_freq_hz),
             )
             if rf_dbm is not None:
-                rf_dbm_f = float(rf_dbm)
-                self._engine.set_params(squelch_rf_level_dbm=rf_dbm_f)
-                if (
-                    self._last_squelch_rf_value is None
-                    or abs(rf_dbm_f - self._last_squelch_rf_value) >= 0.08
-                    or now - self._last_squelch_rf_ui >= 0.12
-                ):
-                    self._last_squelch_rf_value = rf_dbm_f
-                    self._last_squelch_rf_ui = now
-                    self._config.update_squelch_rf_level(rf_dbm_f)
+                self._engine.set_params(squelch_rf_level_dbm=float(rf_dbm))
         if params.ref_scale_auto:
             now = time.monotonic()
             if now - self._last_auto_ref_emit > 0.4:

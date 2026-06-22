@@ -50,6 +50,19 @@ def test_trace_smooth_auto_is_off_not_equal_rbw():
     assert format_smoothing_status(updated) == "SUAV OFF"
 
 
+def test_resolution_status_iq_wide_span_includes_fft_and_bin():
+    params = SpectrumParams(
+        capture_mode="iq",
+        fft_auto=True,
+        fft_size=1024,
+        sample_rate_hz=18_000_000.0,
+        span_hz=18_000_000.0,
+    )
+    res = format_resolution_status(params)
+    assert "FFT 1024" in res
+    assert "kHz" in res or "MHz" in res
+
+
 def test_resolution_preset_selected_iq():
     params = SpectrumParams(capture_mode="iq", rbw_auto=True, fft_size=2048)
     assert resolution_preset_selected(params, fft_size=2048) is True

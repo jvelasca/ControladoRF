@@ -216,9 +216,17 @@ def detect_sources(*, probe_backend: bool = False) -> List[SourceDescriptor]:
         )
     ]
 
+    from core.rf.source_ids import ANALYZER_ONLY_DEVICES
+
     for spec in hardware_device_specs():
+        if spec.device_id in ANALYZER_ONLY_DEVICES:
+            continue
         usb_devices = enumerate_usb_for_spec(spec)
         results.extend(_descriptor_from_spec(spec, usb_devices, probe_backend=probe_backend))
+
+    from core.monitor.serial_discovery import detect_serial_analyzers
+
+    results.extend(detect_serial_analyzers())
 
     return results
 
@@ -243,6 +251,8 @@ def idle_message_for_source(source_id: str, *, descriptors: Optional[List[Source
 
 
 def get_default_source_id(*, descriptors: Optional[List[SourceDescriptor]] = None) -> str:
+    from core.rf.source_ids import is_analyzer_only_source
+
     items = descriptors or detect_sources(probe_backend=False)
     default_family = get_default_device_id()
     for item in items:
@@ -251,4 +261,24 @@ def get_default_source_id(*, descriptors: Optional[List[SourceDescriptor]] = Non
     for item in items:
         if item.device_family == default_family:
             return item.source_id
+    for item in items:
+        if item.source_id != "mock" and item.available and not is_analyzer_only_source(item.source_id):
+            return item.source_id
+    for item in items:
+        if item.source_id != "mock" and item.available:
+            return item.source_id
     return "mock"
+
+
+def prefer_playable_source_id(*, descriptors: Optional[List[SourceDescriptor]] = None) -> str:
+    """Fuente para PLAY automático — prioriza SDR (HackRF) frente a analizadores serie."""
+    from core.rf.source_ids import is_analyzer_only_source
+
+    items = descriptors or detect_sources(probe_backend=False)
+    for item in items:
+        if item.source_id == "mock":
+            continue
+        if not item.available or is_analyzer_only_source(item.source_id):
+            continue
+        return item.source_id
+    return get_default_source_id(descriptors=items)

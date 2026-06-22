@@ -216,7 +216,9 @@ def patch_rbw_hz(params: SpectrumParams, rbw_hz: float) -> SpectrumParams:
         return switched
     updated = switched
     if updated.capture_mode == "sweep":
-        updated.rbw_hz = clamp_sweep_rbw_hz(float(rbw_hz))
+        from core.rf.display import clamp_sweep_rbw_hz, snap_sweep_rbw_to_preset
+
+        updated.rbw_hz = snap_sweep_rbw_to_preset(clamp_sweep_rbw_hz(float(rbw_hz)))
         if preserve_fft:
             updated.fft_size = fft_size
             updated.fft_auto = fft_auto
@@ -337,6 +339,22 @@ patch_vbw_manual = patch_trace_smooth_manual
 patch_smooth_bins = patch_trace_smooth_bins
 
 
+def patch_iq_trace_sharp(params: SpectrumParams, *, enabled: bool) -> SpectrumParams:
+    """Activa traza fina IQ: pico, SUAV ligero, FFT AUTO ampliada si span ancho."""
+    updated = params.copy()
+    updated.iq_trace_sharp = bool(enabled)
+    if enabled:
+        updated.detector = "peak"
+        updated.trace_smooth_auto = False
+        updated.trace_smooth_bins = 3
+    if updated.capture_mode == "iq" and updated.fft_auto:
+        from core.rf.display import pick_auto_fft_size
+
+        updated.fft_size = pick_auto_fft_size(updated)
+        updated.rbw_hz = updated.sample_rate_hz / max(updated.fft_size, 1)
+    return updated
+
+
 def patch_sweep_auto(params: SpectrumParams, *, enabled: bool = True) -> SpectrumParams:
     updated = params.copy()
     updated.sweep_auto = bool(enabled)
@@ -439,9 +457,11 @@ def sync_analysis_chain(params: SpectrumParams) -> None:
         current = params.rbw_hz if params.rbw_hz > 0 else None
         params.rbw_hz = pick_stable_sweep_rbw(span, current)
     elif params.rbw_hz > 0:
-        from core.rf.display import clamp_sweep_rbw_hz
+        from core.rf.display import clamp_sweep_rbw_hz, snap_sweep_rbw_to_preset
 
-        params.rbw_hz = clamp_sweep_rbw_hz(params.rbw_hz)
+        params.rbw_hz = snap_sweep_rbw_to_preset(
+            clamp_sweep_rbw_hz(float(params.rbw_hz))
+        )
     if params.fft_auto:
         params.fft_size = pick_auto_fft_size(params)
     if params.sweep_auto:

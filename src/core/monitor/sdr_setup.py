@@ -224,13 +224,10 @@ def recommended_next_steps(report: DeviceSetupReport) -> List[InstallStep]:
 
 
 def map_source_id_to_device_id(source_id: str) -> str:
-    if source_id == "mock":
+    from core.rf.source_ids import parse_source_id
+
+    parsed = parse_source_id(source_id)
+    if parsed.device_id == "mock":
         return "mock"
-    if source_id.startswith("airspy_hf"):
-        return "airspy_hf"
-    if source_id.startswith("airspy"):
-        return "airspy"
-    if source_id.startswith("hackrf"):
-        return "hackrf"
-    spec = get_device_spec(source_id)
-    return spec.device_id if spec else source_id
+    spec = get_device_spec(parsed.device_id)
+    return spec.device_id if spec else parsed.device_id

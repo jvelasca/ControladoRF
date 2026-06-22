@@ -26,8 +26,20 @@ from gui.monitor.monitor_bw_sweep_controls import (
     MonitorVbwControl,
 )
 from gui.monitor.monitor_export_menu import MonitorExportMenuButton
-from gui.monitor.monitor_freq_span_controls import MonitorFreqControl, MonitorSpanControl
-from gui.monitor.monitor_lcd_styles import apply_monitor_toolbar_chrome
+from gui.monitor.monitor_freq_span_controls import (
+    MonitorFreqControl,
+    MonitorSpanControl,
+    TOOLBAR_FREQ_MIN_WIDTH,
+    TOOLBAR_SPAN_MIN_WIDTH,
+)
+from gui.monitor.monitor_lcd_styles import (
+    MONITOR_TOOLBAR_CONTROL_HEIGHT,
+    MONITOR_TOOLBAR_GROUP_HEIGHT,
+    apply_monitor_toolbar_chrome,
+    configure_monitor_toolbar_control,
+    configure_monitor_toolbar_group,
+    configure_monitor_toolbar_mode_button,
+)
 from gui.monitor.monitor_lna_control import MonitorLnaControl
 from gui.monitor.monitor_numeric_control import MonitorNumericControl
 from gui.monitor.monitor_shortcuts import MONITOR_SHORTCUTS
@@ -50,6 +62,7 @@ class MonitorToolBarWidget(QWidget):
         self._running = False
         self._connecting = False
         self._syncing = False
+        self._last_patch_keys: list[str] = []
         self._transport_btn: Optional[QToolButton] = None
         self._mode_buttons: dict[str, QToolButton] = {}
         self._mode_frame: Optional[QFrame] = None
@@ -66,7 +79,7 @@ class MonitorToolBarWidget(QWidget):
         self._trigger_btn: Optional[QToolButton] = None
         self._build()
         apply_monitor_toolbar_chrome(self)
-        self.setMinimumHeight(52)
+        self.setMinimumHeight(MONITOR_TOOLBAR_GROUP_HEIGHT + 4)
         self.setMinimumWidth(640)
         self.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Fixed)
         self.set_params(self._params)
@@ -85,11 +98,12 @@ class MonitorToolBarWidget(QWidget):
 
         mode_frame = QFrame(self)
         mode_frame.setObjectName("MonitorToolbarMode")
-        mode_frame.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+        mode_frame.setMinimumWidth(168)
         self._mode_frame = mode_frame
         mode_layout = QHBoxLayout(mode_frame)
-        mode_layout.setContentsMargins(6, 5, 6, 5)
-        mode_layout.setSpacing(4)
+        mode_layout.setContentsMargins(8, 4, 8, 4)
+        mode_layout.setSpacing(6)
+        configure_monitor_toolbar_group(mode_frame, mode_layout)
         mode_group = QButtonGroup(mode_frame)
         mode_group.setExclusive(True)
         for mode in MODE_CHOICES:
@@ -98,29 +112,31 @@ class MonitorToolBarWidget(QWidget):
             btn.setText(tr(mode.label_key()))
             btn.setCheckable(True)
             btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
-            btn.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
-            btn.setMinimumWidth(76)
-            btn.setMinimumHeight(28)
+            configure_monitor_toolbar_mode_button(btn)
             btn.clicked.connect(lambda _checked=False, m=mode: self._on_mode_clicked(m))
             mode_group.addButton(btn)
             self._mode_buttons[mode.value] = btn
-            mode_layout.addWidget(btn)
+            mode_layout.addWidget(btn, stretch=1)
         self._mode_buttons[MonitorOperatingMode.SPECTRUM.value].setChecked(True)
         root.addWidget(mode_frame)
 
         freq_frame = QFrame(self)
         freq_frame.setObjectName("MonitorToolbarFreqGroup")
+        freq_frame.setMinimumWidth(TOOLBAR_FREQ_MIN_WIDTH + TOOLBAR_SPAN_MIN_WIDTH + 20)
         freq_layout = QHBoxLayout(freq_frame)
         freq_layout.setContentsMargins(8, 4, 8, 4)
         freq_layout.setSpacing(6)
+        configure_monitor_toolbar_group(freq_frame, freq_layout)
 
         self._freq = MonitorFreqControl(parent=freq_frame)
         self._freq.bind_patch(self._patch_params)
-        freq_layout.addWidget(self._freq)
+        configure_monitor_toolbar_control(self._freq)
+        freq_layout.addWidget(self._freq, stretch=3)
 
         self._span = MonitorSpanControl(parent=freq_frame)
         self._span.bind_patch(self._patch_params)
-        freq_layout.addWidget(self._span)
+        configure_monitor_toolbar_control(self._span)
+        freq_layout.addWidget(self._span, stretch=1)
         root.addWidget(freq_frame)
 
         rf_frame = QFrame(self)
@@ -128,13 +144,16 @@ class MonitorToolBarWidget(QWidget):
         rf_layout = QHBoxLayout(rf_frame)
         rf_layout.setContentsMargins(8, 4, 8, 4)
         rf_layout.setSpacing(6)
+        configure_monitor_toolbar_group(rf_frame, rf_layout)
 
         self._ampt = MonitorAmptControl(parent=rf_frame)
         self._ampt.bind_patch(self._patch_params)
+        configure_monitor_toolbar_control(self._ampt)
         rf_layout.addWidget(self._ampt)
 
         self._lna = MonitorLnaControl(parent=rf_frame)
         self._lna.bind_patch(self._patch_params)
+        configure_monitor_toolbar_control(self._lna)
         rf_layout.addWidget(self._lna)
 
         self._vga = MonitorNumericControl(
@@ -147,6 +166,7 @@ class MonitorToolBarWidget(QWidget):
             parent=rf_frame,
         )
         self._vga.value_changed.connect(self._on_vga_changed)
+        configure_monitor_toolbar_control(self._vga)
         rf_layout.addWidget(self._vga)
         root.addWidget(rf_frame)
 
@@ -157,21 +177,26 @@ class MonitorToolBarWidget(QWidget):
         bw_layout = QHBoxLayout(bw_frame)
         bw_layout.setContentsMargins(8, 4, 8, 4)
         bw_layout.setSpacing(6)
+        configure_monitor_toolbar_group(bw_frame, bw_layout)
 
         self._fft = MonitorFftControl(parent=bw_frame)
         self._fft.bind_patch(self._patch_params)
+        configure_monitor_toolbar_control(self._fft)
         bw_layout.addWidget(self._fft)
 
         self._rbw = MonitorRbwControl(parent=bw_frame)
         self._rbw.bind_patch(self._patch_params)
+        configure_monitor_toolbar_control(self._rbw)
         bw_layout.addWidget(self._rbw)
 
         self._vbw = MonitorVbwControl(parent=bw_frame)
         self._vbw.bind_patch(self._patch_params)
+        configure_monitor_toolbar_control(self._vbw)
         bw_layout.addWidget(self._vbw)
 
         self._sweep = MonitorSweepControl(parent=bw_frame)
         self._sweep.bind_patch(self._patch_params)
+        configure_monitor_toolbar_control(self._sweep)
         bw_layout.addWidget(self._sweep)
 
         root.addWidget(bw_frame)
@@ -181,6 +206,7 @@ class MonitorToolBarWidget(QWidget):
         utils_layout = QHBoxLayout(utils_frame)
         utils_layout.setContentsMargins(8, 4, 8, 4)
         utils_layout.setSpacing(6)
+        configure_monitor_toolbar_group(utils_frame, utils_layout)
 
         self._trigger_btn = QToolButton(utils_frame)
         self._trigger_btn.setObjectName("MonitorToolbarTriggerBtn")
@@ -216,7 +242,7 @@ class MonitorToolBarWidget(QWidget):
             full = tr(mode.label_key())
             btn.setText(short_labels.get(mode.value, full) if compact else full)
             btn.setToolTip(full)
-            btn.setMinimumWidth(56 if compact else 76)
+            btn.setMinimumWidth(56 if compact else 68)
 
     def _apply_tooltips(self) -> None:
         if self._transport_btn is not None:
@@ -263,6 +289,10 @@ class MonitorToolBarWidget(QWidget):
                 tooltip_with_shortcut(tr("monitor_tip_trigger"), MONITOR_SHORTCUTS["trigger"])
             )
 
+    def set_live_display_scale(self, ref_level_dbm: float, ref_range_db: float) -> None:
+        if self._ampt is not None:
+            self._ampt.set_live_scale(ref_level_dbm, ref_range_db)
+
     def _on_trigger_clicked(self) -> None:
         if self._syncing:
             return
@@ -284,9 +314,20 @@ class MonitorToolBarWidget(QWidget):
     def _patch_params(self, updated: SpectrumParams) -> None:
         if self._syncing:
             return
+        from core.monitor.monitor_flow_log import TOOLBAR_PARAM_KEYS, diff_param_keys
+
+        prev = self._params.copy()
         self._params = updated.copy()
+        self._last_patch_keys = list(diff_param_keys(prev, self._params, TOOLBAR_PARAM_KEYS))
+        if not self._last_patch_keys:
+            return
         self._refresh_trigger_button()
         self.params_changed.emit(self._params)
+
+    def consume_patch_keys(self) -> list[str]:
+        keys = list(self._last_patch_keys)
+        self._last_patch_keys = []
+        return keys
 
     def _on_vga_changed(self, value: float) -> None:
         if self._syncing:
@@ -354,6 +395,10 @@ class MonitorToolBarWidget(QWidget):
         if self._sweep is not None:
             self._sweep.commit_editing()
 
+    def set_channelization_service(self, service) -> None:
+        if self._freq is not None:
+            self._freq.set_channelization_service(service)
+
     def set_params(self, params: SpectrumParams, *, force: bool = False) -> None:
         prev = self._params
         self._syncing = True
@@ -389,6 +434,25 @@ class MonitorToolBarWidget(QWidget):
             self._refresh_trigger_button()
         finally:
             self._syncing = False
+        self._apply_analyzer_source_ui(self._params)
+
+    def _apply_analyzer_source_ui(self, params: SpectrumParams) -> None:
+        from core.rf.source_ids import is_analyzer_only_source
+        from i18n.json_translation import tr
+
+        blocked = is_analyzer_only_source(params.source_id)
+        sdr_btn = self._mode_buttons.get(MonitorOperatingMode.SDR.value)
+        if sdr_btn is not None:
+            sdr_btn.setEnabled(not blocked)
+            if blocked:
+                sdr_btn.setToolTip(tr("monitor_source_tip_sdr_blocked"))
+            else:
+                sdr_btn.setToolTip(tr("monitor_tip_mode_sdr"))
+        if self._lna is not None:
+            self._lna.setVisible(not blocked)
+        if self._vga is not None:
+            self._vga.setVisible(not blocked)
+        self._refresh_mode_button_labels()
 
     def recargar_textos(self) -> None:
         self._refresh_mode_button_labels()

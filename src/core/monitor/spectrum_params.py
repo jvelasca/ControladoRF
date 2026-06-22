@@ -52,6 +52,9 @@ class SpectrumParams:
     single_sweep_pending: bool = False
     trace_mode: str = "clear_write"
     detector: str = "rms"
+    # IQ/SDR: traza fina (FFT mayor, pico por columna, sin SUAV espacial).
+    iq_trace_sharp: bool = False
+    display_trace_fill: bool = False
     fft_size: int = 2048
     sample_rate_hz: float = 2_000_000.0
     baseband_filter_bw_hz: float = 1_750_000.0
@@ -76,6 +79,7 @@ class SpectrumParams:
     demod_agc_attack: float = 50.0
     demod_agc_decay: float = 5.0
     squelch_db: float = -81.0
+    squelch_enabled: bool = True
     squelch_rf_level_dbm: float = -120.0
     show_demod_bandwidth: bool = True
     recorder_mode: str = "baseband"
@@ -406,6 +410,8 @@ class SpectrumParams:
             single_sweep_pending=self.single_sweep_pending,
             trace_mode=self.trace_mode,
             detector=self.detector,
+            iq_trace_sharp=self.iq_trace_sharp,
+            display_trace_fill=self.display_trace_fill,
             fft_size=self.fft_size,
             sample_rate_hz=self.sample_rate_hz,
             baseband_filter_bw_hz=self.baseband_filter_bw_hz,
@@ -430,6 +436,7 @@ class SpectrumParams:
             demod_agc_attack=self.demod_agc_attack,
             demod_agc_decay=self.demod_agc_decay,
             squelch_db=self.squelch_db,
+            squelch_enabled=self.squelch_enabled,
             squelch_rf_level_dbm=self.squelch_rf_level_dbm,
             show_demod_bandwidth=self.show_demod_bandwidth,
             recorder_mode=self.recorder_mode,

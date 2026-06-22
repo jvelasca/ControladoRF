@@ -172,8 +172,10 @@ def populate_rbw_iq_menu(
     *,
     parent: Optional[QWidget] = None,
 ) -> None:
-    """Modo IQ: RBW = SR/FFT (derivado). Solo AUTO/MANUAL de resolución (FFT)."""
+    """Modo IQ: RBW = SR/FFT. Menú AUTO/MANUAL + presets FFT como ancho de bin."""
     del parent
+    from core.monitor.monitor_bw_profile import IQ_FFT_PRESETS
+
     base = _resolve_params(params)
     auto_on = fft_resolution_auto(base)
     act_auto = menu.addAction(tr("monitor_tb_bw_auto"))
@@ -188,6 +190,41 @@ def populate_rbw_iq_menu(
     act_manual.triggered.connect(
         lambda: _defer_patch_from(patch, params, patch_fft_manual)
     )
+    menu.addSeparator()
+    sr = max(float(base.sample_rate_hz or 0.0), 1.0)
+    for pts in IQ_FFT_PRESETS:
+        rbw_hz = sr / max(int(pts), 1)
+        label = f"{format_bw_hz(rbw_hz)} · {pts} pts"
+        act = menu.addAction(label)
+        act.setCheckable(True)
+        act.setChecked(resolution_preset_selected(base, fft_size=pts))
+        act.triggered.connect(
+            lambda _c=False, n=pts: _defer_patch_from(patch, params, patch_fft_size, fft_size=n)
+        )
+
+
+def populate_sharp_trace_menu(
+    menu: QMenu,
+    params: ParamsSupplier,
+    patch: Callable[[SpectrumParams], None],
+) -> None:
+    from core.monitor.monitor_bw_sweep_logic import patch_iq_trace_sharp, sync_analysis_chain
+
+    base = _resolve_params(params)
+
+    def _apply(enabled: bool) -> None:
+        updated = patch_iq_trace_sharp(_resolve_params(params), enabled=enabled)
+        sync_analysis_chain(updated)
+        patch(updated)
+
+    act_on = menu.addAction(tr("monitor_lcd_trace_sharp_on"))
+    act_on.setCheckable(True)
+    act_on.setChecked(bool(base.iq_trace_sharp))
+    act_on.triggered.connect(lambda: _apply(True))
+    act_off = menu.addAction(tr("monitor_lcd_trace_sharp_off"))
+    act_off.setCheckable(True)
+    act_off.setChecked(not base.iq_trace_sharp)
+    act_off.triggered.connect(lambda: _apply(False))
 
 
 def populate_rbw_sweep_menu(

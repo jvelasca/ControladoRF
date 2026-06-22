@@ -68,12 +68,48 @@ MOCK_CAPABILITIES = DeviceCapabilities(
     supports_iq_stream=True,
 )
 
+RF_EXPLORER_CAPABILITIES = DeviceCapabilities(
+    device_id="rf_explorer",
+    display_name="RF Explorer",
+    freq_min_hz=15_000_000.0,
+    freq_max_hz=2_700_000_000.0,
+    instant_bw_hz=100_000.0,
+    sample_rate_min_hz=0.0,
+    sample_rate_max_hz=0.0,
+    sweep_rbw_min_hz=2_600.0,
+    sweep_rbw_max_hz=640_000.0,
+    gain_stages=(),
+    supports_bias_tee=False,
+    supports_sweep=True,
+    supports_iq_stream=False,
+)
+
+TINYSA_CAPABILITIES = DeviceCapabilities(
+    device_id="tinysa",
+    display_name="TinySA",
+    freq_min_hz=100_000.0,
+    freq_max_hz=960_000_000.0,
+    instant_bw_hz=100_000.0,
+    sample_rate_min_hz=0.0,
+    sample_rate_max_hz=0.0,
+    sweep_rbw_min_hz=2_000.0,
+    sweep_rbw_max_hz=600_000.0,
+    gain_stages=(),
+    supports_bias_tee=False,
+    supports_sweep=True,
+    supports_iq_stream=False,
+)
+
 _CAPABILITIES = {
     "hackrf": HACKRF_CAPABILITIES,
     "mock": MOCK_CAPABILITIES,
+    "rf_explorer": RF_EXPLORER_CAPABILITIES,
+    "tinysa": TINYSA_CAPABILITIES,
 }
 
 
 def capabilities_for_device(device_id: str) -> DeviceCapabilities:
-    base = device_id.split("_")[0] if device_id else "mock"
+    from core.rf.source_ids import device_family
+
+    base = device_family(device_id) if device_id else "mock"
     return _CAPABILITIES.get(base, MOCK_CAPABILITIES)

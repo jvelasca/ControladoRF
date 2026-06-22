@@ -195,10 +195,16 @@ def compute_rf_link_metrics(
     frame: SpectrumFrame,
     params: SpectrumParams,
     *,
-    channel_half_bw_hz: float = DEFAULT_CHANNEL_HALF_BW_HZ,
+    channel_half_bw_hz: float | None = None,
 ) -> RfLinkMetrics:
     """Calcula métricas RF en la frecuencia activa del marcador."""
     marker_hz = float(active_marker_freq_hz(params))
+    if channel_half_bw_hz is None:
+        demod_bw = float(getattr(params, "demod_bandwidth_hz", 0.0) or 0.0)
+        if demod_bw >= 50_000.0:
+            channel_half_bw_hz = demod_bw / 2.0
+        else:
+            channel_half_bw_hz = DEFAULT_CHANNEL_HALF_BW_HZ
     freqs = np.asarray(frame.freqs_hz, dtype=float).reshape(-1)
     power = np.asarray(frame.power_db, dtype=float).reshape(-1)
     n = min(freqs.size, power.size)
@@ -228,8 +234,8 @@ def compute_rf_link_metrics(
     adj = channel_half_bw_hz * 2.0
     main_low = marker_hz - channel_half_bw_hz
     main_high = marker_hz + channel_half_bw_hz
-    left_pwr = _band_power_dbm(freqs, power, main_low - adj, main_low)
-    right_pwr = _band_power_dbm(freqs, power, main_high, main_high + adj)
+    left_pwr = _band_power_dbm(freqs, power, main_low - adj, main_low - 1.0)
+    right_pwr = _band_power_dbm(freqs, power, main_high + 1.0, main_high + adj)
     acp_l = (channel_pwr - left_pwr) if channel_pwr is not None and left_pwr is not None else None
     acp_r = (channel_pwr - right_pwr) if channel_pwr is not None and right_pwr is not None else None
 

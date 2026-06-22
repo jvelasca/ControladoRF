@@ -2,7 +2,7 @@
 
 Documento maestro del módulo **Monitor** de CONTROLADORF: analizador de espectro SDR en tiempo real, supervisión de portadoras del show y sistema de alarmas con registro histórico.
 
-**Estado actual:** v1.0.0 — estudio arquitectura RF (`docs/rf_engine/`). M1 Monitor en curso — UI analizador, toolbar LCD, asistente SDR multiplataforma (HackRF/Airspy/HF+). Ver [monitor_sdr_setup.md](monitor_sdr_setup.md).  
+**Estado actual:** v1.1.0 — analizador Monitor (toolbar LCD, traza fina F, RBW barrido), canalización RF global, fuentes RF Explorer/TinySA. Ver [monitor_sdr_setup.md](monitor_sdr_setup.md) y [monitor_bw_trace.md](monitor_bw_trace.md).  
 **Id interno:** `monitor` · **Pestaña principal:** Monitor
 
 ---

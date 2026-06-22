@@ -26,11 +26,77 @@ from core.inventory_catalog import DEVICE_TYPE_ORDER, _TYPE_I18N, enrich_equipo_
 from core.inventory_editor import EDITABLE_FIELDS
 from core.inventory_metadata import DEFAULT_METADATA
 from core.inventory_selection import FOCUS_CHANNEL, FOCUS_GROUP, FOCUS_LIST, focus_kind
+from core.rf.channel_input import format_channel_display, parse_channel_input
+from core.rf.channelization_service import ChannelizationService
 from gui.color_picker_utils import parse_color, pick_color
 from gui.icon_utils import ICON_SIZE_BUTTON, get_app_icon
 from gui.panel_styles import apply_panel_style, get_panel_colors
 from utils.theme_utils import is_dark_mode
 from i18n.json_translation import tr
+
+
+class InventoryFrequencyEditor(QWidget):
+    """Editor MHz o canal según modo global de canalización."""
+
+    def __init__(self, on_edit, parent: Optional[QWidget] = None) -> None:
+        super().__init__(parent)
+        self._service: Optional[ChannelizationService] = None
+        self._channel_mode = False
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self._mhz_spin = QDoubleSpinBox(self)
+        self._mhz_spin.setRange(0.0, 9999.999)
+        self._mhz_spin.setDecimals(3)
+        self._mhz_spin.setSuffix(" MHz")
+        self._mhz_spin.setSpecialValueText("—")
+        self._mhz_spin.valueChanged.connect(on_edit)
+        self._channel_edit = QLineEdit(self)
+        self._channel_edit.setPlaceholderText(tr("inventory_prop_frequency_channel_hint"))
+        self._channel_edit.hide()
+        self._channel_edit.editingFinished.connect(on_edit)
+        self._channel_edit.textChanged.connect(on_edit)
+        layout.addWidget(self._mhz_spin)
+        layout.addWidget(self._channel_edit)
+
+    def set_channelization_service(self, service: Optional[ChannelizationService]) -> None:
+        self._service = service
+        self._apply_mode()
+
+    def set_channel_mode(self, enabled: bool) -> None:
+        self._channel_mode = enabled and self._service is not None
+        self._apply_mode()
+
+    def _apply_mode(self) -> None:
+        show_channel = self._channel_mode and self._service is not None
+        self._mhz_spin.setVisible(not show_channel)
+        self._channel_edit.setVisible(show_channel)
+
+    def read_mhz(self) -> Optional[float]:
+        if self._channel_mode and self._service is not None:
+            near = None
+            if self._mhz_spin.value() > 0:
+                near = self._mhz_spin.value()
+            hz = parse_channel_input(
+                self._service,
+                self._channel_edit.text(),
+                near_hz=(near * 1_000_000.0) if near else None,
+            )
+            return None if hz is None else hz / 1_000_000.0
+        if self._mhz_spin.value() == 0.0 and self._mhz_spin.specialValueText():
+            return None
+        return float(self._mhz_spin.value())
+
+    def write_mhz(self, value: Any) -> None:
+        if value in (None, ""):
+            self._mhz_spin.setValue(0.0)
+            self._channel_edit.clear()
+            return
+        mhz = float(value)
+        self._mhz_spin.setValue(mhz)
+        if self._channel_mode and self._service is not None:
+            self._channel_edit.setText(
+                format_channel_display(self._service, mhz * 1_000_000.0)
+            )
 
 
 class InventoryPropertiesPanel(QWidget):
@@ -103,6 +169,7 @@ class InventoryPropertiesPanel(QWidget):
 
         self._field_labels: Dict[str, QLabel] = {}
         self._editors: Dict[str, QWidget] = {}
+        self._channelization_service: Optional[ChannelizationService] = None
         self._readonly_labels: Dict[str, QLabel] = {}
         self._section_titles: Dict[str, QLabel] = {}
         self._channel_hosts: list[QWidget] = []
@@ -285,12 +352,7 @@ class InventoryPropertiesPanel(QWidget):
             widget.valueChanged.connect(self._on_field_edited)
             return widget
         if kind == "frequency":
-            widget = QDoubleSpinBox()
-            widget.setRange(0.0, 9999.999)
-            widget.setDecimals(3)
-            widget.setSuffix(" MHz")
-            widget.setSpecialValueText("—")
-            widget.valueChanged.connect(self._on_field_edited)
+            widget = InventoryFrequencyEditor(self._on_field_edited, self)
             return widget
         if kind == "bool":
             widget = QCheckBox()
@@ -306,6 +368,16 @@ class InventoryPropertiesPanel(QWidget):
         widget = QLineEdit()
         widget.textChanged.connect(self._on_field_edited)
         return widget
+
+    def set_channelization_service(self, service: Optional[ChannelizationService]) -> None:
+        self._channelization_service = service
+        channel_mode = (
+            service is not None and service.get_state().input_mode == "channel"
+        )
+        freq_editor = self._editors.get("frequency_mhz")
+        if isinstance(freq_editor, InventoryFrequencyEditor):
+            freq_editor.set_channelization_service(service)
+            freq_editor.set_channel_mode(channel_mode)
 
     def load_focus(self, focus: Optional[Dict[str, Any]]) -> None:
         self._loading = True
@@ -494,6 +566,8 @@ class InventoryPropertiesPanel(QWidget):
             for field, label in self._readonly_labels.items():
                 label.setText(_format_readonly(field, data.get(field)))
 
+        self.set_channelization_service(self._channelization_service)
+
         self._btn_apply.setEnabled(False)
         self._btn_revert.setEnabled(False)
         self._btn_color.setText(tr("inventory_action_pick_color"))
@@ -655,6 +729,8 @@ def _normalize_value(field: str, value: Any) -> Any:
 
 
 def _read_editor(field: str, editor: QWidget) -> Any:
+    if isinstance(editor, InventoryFrequencyEditor):
+        return editor.read_mhz()
     if isinstance(editor, QSpinBox):
         return None if editor.value() == editor.minimum() and editor.specialValueText() else editor.value()
     if isinstance(editor, QDoubleSpinBox):
@@ -669,6 +745,9 @@ def _read_editor(field: str, editor: QWidget) -> Any:
 
 
 def _write_editor(field: str, editor: QWidget, value: Any) -> None:
+    if isinstance(editor, InventoryFrequencyEditor):
+        editor.write_mhz(value)
+        return
     if isinstance(editor, QSpinBox):
         if value in (None, ""):
             editor.setValue(0)

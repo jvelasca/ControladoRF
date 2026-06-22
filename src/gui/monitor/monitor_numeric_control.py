@@ -81,6 +81,8 @@ class MonitorDecimalSpinBox(QDoubleSpinBox):
                     if editor is not None:
                         editor.insert(".")
                         return True
+                if key in range(int(Qt.Key.Key_A), int(Qt.Key.Key_Z) + 1):
+                    return True
         return super().eventFilter(obj, event)
 
     def _select_all_text(self) -> None:

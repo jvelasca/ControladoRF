@@ -4,8 +4,8 @@ from __future__ import annotations
 import math
 from typing import Callable, Optional
 
-from PyQt6.QtCore import QTimer
-from PyQt6.QtWidgets import QMenu, QWidget
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QMenu, QToolButton, QWidget
 
 from core.monitor.monitor_bw_profile import (
     fft_resolution_auto,
@@ -18,6 +18,7 @@ from core.monitor.monitor_bw_profile import (
     trace_smoothing_bins,
     uses_iq_resolution,
 )
+from core.monitor.monitor_format import format_bw_hz
 from core.monitor.monitor_bw_sweep_logic import (
     effective_sweep_time_ms,
     patch_rbw_hz,
@@ -155,7 +156,8 @@ class MonitorFftControl(_MonitorBwControlBase):
 
         self._params = params.copy()
         analyzer = params.operating_mode_enum() is MonitorOperatingMode.SPECTRUM
-        self.setVisible(analyzer and uses_iq_resolution(params))
+        # En IQ la resolución se ajusta con RBW (ancho de bin = SR/FFT); FFT vía menú RBW.
+        self.setVisible(False)
         self.set_title(tr("monitor_lcd_fft"))
         if self.is_user_editing() and not force:
             return
@@ -164,7 +166,10 @@ class MonitorFftControl(_MonitorBwControlBase):
             if fft_resolution_auto(params):
                 self.set_read_only(True, force=force)
                 self._spin.setDecimals(0)
-                self._spin.setSuffix(f" {tr('monitor_lcd_fft_pts')} {tr('monitor_lcd_auto_suffix')}")
+                bin_txt = format_bw_hz(params.effective_rbw_hz())
+                self._spin.setSuffix(
+                    f" {tr('monitor_lcd_fft_pts')} · {bin_txt} {tr('monitor_lcd_auto_suffix')}"
+                )
                 self.set_value(float(params.fft_size), force=force)
                 self.set_value_mode("auto")
             else:
@@ -197,18 +202,64 @@ class MonitorRbwControl(_MonitorBwControlBase):
 
     def __init__(self, *, parent: Optional[QWidget] = None) -> None:
         super().__init__(tr("monitor_lcd_rbw"), parent=parent)
+        self._sharp_syncing = False
+        self._sharp_btn = QToolButton(self)
+        self._sharp_btn.setObjectName("MonitorSharpTraceBtn")
+        self._sharp_btn.setCheckable(True)
+        self._sharp_btn.setMinimumWidth(40)
+        self._sharp_btn.setFixedHeight(22)
+        self._sharp_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._sharp_btn.toggled.connect(self._on_sharp_toggled)
+        self.insert_value_row_widget(self._sharp_btn, before_menu=True)
         self._apply_tooltips()
 
     def recargar_textos(self) -> None:
-        self.set_title(tr(resolution_title_key(self._params)))
+        self.set_title(tr("monitor_lcd_rbw"))
         self.set_params(self._params)
         self._apply_tooltips()
+        self._refresh_sharp_button()
 
     def _apply_tooltips(self) -> None:
-        self.set_tooltips(
-            tr(resolution_tip_key(self._params)),
-            tr(resolution_menu_tip_key(self._params)),
-        )
+        if self._params.capture_mode == "iq":
+            self.set_tooltips(tr("monitor_tip_rbw_iq"), tr("monitor_tip_rbw_menu"))
+            self._sharp_btn.setToolTip(tr("monitor_tip_trace_sharp"))
+        else:
+            self.set_tooltips(
+                tr(resolution_tip_key(self._params)),
+                tr(resolution_menu_tip_key(self._params)),
+            )
+            self._sharp_btn.setToolTip("")
+
+    def _refresh_sharp_button(self) -> None:
+        iq = self._params.capture_mode == "iq"
+        self._sharp_btn.setVisible(iq)
+        if not iq:
+            return
+        enabled = bool(self._params.iq_trace_sharp)
+        self._sharp_syncing = True
+        try:
+            self._sharp_btn.setChecked(enabled)
+            self._sharp_btn.setText(
+                tr("monitor_readout_sharp_on") if enabled else tr("monitor_readout_sharp_off")
+            )
+        finally:
+            self._sharp_syncing = False
+
+    def _on_sharp_toggled(self, checked: bool) -> None:
+        if self._sharp_syncing:
+            return
+        from core.monitor.monitor_bw_sweep_logic import patch_iq_trace_sharp, sync_analysis_chain
+
+        updated = patch_iq_trace_sharp(self._params, enabled=bool(checked))
+        sync_analysis_chain(updated)
+        self._emit_patch(updated)
+
+    def _manual_rbw_hz(self, params: SpectrumParams) -> float:
+        if params.capture_mode == "sweep" and not params.rbw_auto:
+            from core.monitor.monitor_bw_sweep_logic import resolved_sweep_rbw_hz
+
+            return float(resolved_sweep_rbw_hz(params))
+        return float(params.effective_rbw_hz())
 
     def _rbw_is_auto(self, params: SpectrumParams) -> bool:
         if params.capture_mode == "iq":
@@ -224,7 +275,7 @@ class MonitorRbwControl(_MonitorBwControlBase):
         else:
             self._spin.setDecimals(3)
             self.set_read_only(False, force=force)
-            self._apply_bw_spin(params.effective_rbw_hz(), force=force)
+            self._apply_bw_spin(self._manual_rbw_hz(params), force=force)
             self.set_value_mode("manual")
 
     def set_params(self, params: SpectrumParams, *, force: bool = False) -> None:
@@ -234,12 +285,13 @@ class MonitorRbwControl(_MonitorBwControlBase):
         analyzer = params.operating_mode_enum() is MonitorOperatingMode.SPECTRUM
         self.setVisible(analyzer)
         self.setEnabled(True)
-        self.set_title(tr(resolution_title_key(params)))
+        self.set_title(tr("monitor_lcd_rbw"))
         if self.is_user_editing() and not force:
             return
         self._prepare_spin_refresh(force=force)
         try:
             self._refresh_rbw_readout(params, force=force)
+            self._refresh_sharp_button()
         finally:
             self._finish_spin_refresh()
         self._apply_tooltips()

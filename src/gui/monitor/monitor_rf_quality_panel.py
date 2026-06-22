@@ -3,12 +3,25 @@ from __future__ import annotations
 
 from typing import Optional
 
-from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
-from PyQt6.QtWidgets import QFrame, QFormLayout, QLabel, QProgressBar, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import (
+    QFrame,
+    QFormLayout,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QTableWidget,
+    QTableWidgetItem,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from core.monitor.monitor_format import format_freq_short
 from core.monitor.rf_metrics import RfLinkMetrics
+from gui.monitor.led_meter_widget import LabeledCompactLedMeter
+from gui.monitor.monitor_rf_bandwidth_widget import MonitorRfBandwidthStripWidget
 from i18n.json_translation import tr
 
 
@@ -92,41 +105,56 @@ class MonitorLinkScoreBar(QFrame):
         )
 
 
-class MonitorSpectralMaskWidget(QFrame):
-    """Máscara espectral ±200 kHz (pass/fail visual)."""
+class MonitorRfAcpMiniMeters(QFrame):
+    """ACP adyacente L/R — vúmetros LED compactos (dBc, mayor = mejor)."""
+
+    _ACP_MIN_DB = 0.0
+    _ACP_MAX_DB = 50.0
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
-        self.setObjectName("MonitorSpectralMask")
-        self.setMinimumHeight(56)
-        self._pass: Optional[bool] = None
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        title = QLabel(tr("monitor_rf_acp_title"))
+        title.setObjectName("MonitorRfAcpTitle")
+        layout.addWidget(title)
+        row = QHBoxLayout()
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(8)
+        self._left = LabeledCompactLedMeter(
+            "L",
+            segments=12,
+            bar_height=11,
+            min_db=self._ACP_MIN_DB,
+            max_db=self._ACP_MAX_DB,
+            mode="acp",
+            value_suffix=" dBc",
+            parent=self,
+        )
+        self._right = LabeledCompactLedMeter(
+            "R",
+            segments=12,
+            bar_height=11,
+            min_db=self._ACP_MIN_DB,
+            max_db=self._ACP_MAX_DB,
+            mode="acp",
+            value_suffix=" dBc",
+            parent=self,
+        )
+        row.addWidget(self._left, stretch=1)
+        row.addWidget(self._right, stretch=1)
+        layout.addLayout(row)
 
-    def set_mask(self, mask_pass: Optional[bool]) -> None:
-        self._pass = mask_pass
-        self.update()
-
-    def paintEvent(self, _event) -> None:
-        painter = QPainter(self)
-        rect = self.rect().adjusted(4, 4, -4, -4)
-        painter.fillRect(rect, QColor(8, 10, 14))
-        mid_x = rect.center().x()
-        channel_w = max(24, int(rect.width() * 0.22))
-        ch_rect = QRect(mid_x - channel_w // 2, rect.top(), channel_w, rect.height())
-        ch_color = QColor(80, 200, 120, 90) if self._pass is not False else QColor(200, 90, 80, 90)
-        painter.fillRect(ch_rect, ch_color)
-        painter.setPen(QPen(QColor(120, 140, 160), 1, Qt.PenStyle.DashLine))
-        painter.drawRect(ch_rect)
-        painter.setPen(QColor(160, 170, 185))
-        painter.setFont(QFont("Consolas", 8))
-        label = tr("monitor_rf_mask_pass") if self._pass else tr("monitor_rf_mask_fail")
-        if self._pass is None:
-            label = tr("monitor_rf_mask_unknown")
-        painter.drawText(rect, Qt.AlignmentFlag.AlignCenter, label)
-        painter.end()
+    def set_values(self, left_db: Optional[float], right_db: Optional[float]) -> None:
+        self._left.set_level(left_db, active=left_db is not None)
+        self._right.set_level(right_db, active=right_db is not None)
 
 
 class MonitorRfQualityPanel(QFrame):
     """Métricas RF Fase 1 integradas en pestaña RADIO."""
+
+    bandwidth_changed = pyqtSignal(float)
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -143,8 +171,12 @@ class MonitorRfQualityPanel(QFrame):
         self._score = MonitorLinkScoreBar(self)
         layout.addWidget(self._score)
 
-        self._mask = MonitorSpectralMaskWidget(self)
-        layout.addWidget(self._mask)
+        self._bw_strip = MonitorRfBandwidthStripWidget(self)
+        self._bw_strip.bandwidth_changed.connect(self.bandwidth_changed.emit)
+        layout.addWidget(self._bw_strip)
+
+        self._acp = MonitorRfAcpMiniMeters(self)
+        layout.addWidget(self._acp)
 
         form = QFormLayout()
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.ExpandingFieldsGrow)
@@ -160,19 +192,28 @@ class MonitorRfQualityPanel(QFrame):
         self._val_noise = QLabel("—")
         self._lbl_offset = QLabel(tr("monitor_rf_carrier_offset"))
         self._val_offset = QLabel("—")
-        self._lbl_acp_l = QLabel(tr("monitor_rf_acp_left"))
-        self._val_acp_l = QLabel("—")
-        self._lbl_acp_r = QLabel(tr("monitor_rf_acp_right"))
-        self._val_acp_r = QLabel("—")
 
         form.addRow(self._lbl_channel, self._val_channel)
         form.addRow(self._lbl_obw, self._val_obw)
         form.addRow(self._lbl_snr, self._val_snr)
         form.addRow(self._lbl_noise, self._val_noise)
         form.addRow(self._lbl_offset, self._val_offset)
-        form.addRow(self._lbl_acp_l, self._val_acp_l)
-        form.addRow(self._lbl_acp_r, self._val_acp_r)
         layout.addLayout(form)
+
+        rds_header = QHBoxLayout()
+        rds_header.setContentsMargins(0, 0, 0, 0)
+        self._rds_title = QLabel(tr("monitor_rds_section"))
+        self._rds_toggle = QToolButton()
+        self._rds_toggle.setCheckable(True)
+        self._rds_toggle.setChecked(False)
+        self._rds_toggle.setAutoRaise(True)
+        self._rds_toggle.setText("▼")
+        self._rds_toggle.setToolTip(tr("monitor_rds_toggle_tip"))
+        self._rds_toggle.toggled.connect(self._on_rds_toggled)
+        rds_header.addWidget(self._rds_title)
+        rds_header.addStretch(1)
+        rds_header.addWidget(self._rds_toggle)
+        layout.addLayout(rds_header)
 
         self._rds_table = QTableWidget(6, 2, self)
         self._rds_table.setObjectName("MonitorRdsInfoTable")
@@ -198,6 +239,7 @@ class MonitorRfQualityPanel(QFrame):
             self._rds_table.setItem(row, 1, QTableWidgetItem("—"))
         self._rds_table.setColumnWidth(0, 130)
         self._rds_table.horizontalHeader().setStretchLastSection(True)
+        self._rds_table.setVisible(False)
         layout.addWidget(self._rds_table)
 
         self._hint = QLabel(tr("monitor_rf_quality_hint"))
@@ -206,17 +248,32 @@ class MonitorRfQualityPanel(QFrame):
         self._hint.setVisible(False)
         layout.addWidget(self._hint)
 
+    def _on_rds_toggled(self, expanded: bool) -> None:
+        self._rds_table.setVisible(expanded)
+        self._rds_toggle.setText("▲" if expanded else "▼")
+
+    def configure_demod_bandwidth(
+        self,
+        *,
+        demod_bw_hz: float,
+        min_hz: float,
+        max_hz: float,
+        step_hz: float,
+    ) -> None:
+        self._bw_strip.set_limits(min_hz=min_hz, max_hz=max_hz, step_hz=step_hz)
+        self._bw_strip.set_demod_bandwidth_hz(demod_bw_hz)
+        self._bw_strip.setVisible(True)
+
     def set_idle(self, *, message: str | None = None) -> None:
         self._score.set_idle(message=message)
-        self._mask.set_mask(None)
+        self._bw_strip.set_obw_hz(None)
+        self._acp.set_values(None, None)
         for val in (
             self._val_channel,
             self._val_obw,
             self._val_snr,
             self._val_noise,
             self._val_offset,
-            self._val_acp_l,
-            self._val_acp_r,
         ):
             val.setText("—")
         self.clear_rds_info()
@@ -253,7 +310,8 @@ class MonitorRfQualityPanel(QFrame):
 
     def update_metrics(self, metrics: RfLinkMetrics) -> None:
         self._score.update_metrics(metrics)
-        self._mask.set_mask(metrics.mask_pass)
+        self._bw_strip.set_obw_hz(metrics.obw_hz)
+        self._acp.set_values(metrics.acp_left_db, metrics.acp_right_db)
         self._val_channel.setText(_fmt_db(metrics.channel_power_dbm))
         self._val_obw.setText(_fmt_hz(metrics.obw_hz))
         self._val_snr.setText(_fmt_db(metrics.snr_db, suffix=" dB"))
@@ -262,8 +320,6 @@ class MonitorRfQualityPanel(QFrame):
             self._val_offset.setText("—")
         else:
             self._val_offset.setText(f"{metrics.carrier_offset_hz:+.0f} Hz")
-        self._val_acp_l.setText(_fmt_db(metrics.acp_left_db, suffix=" dB"))
-        self._val_acp_r.setText(_fmt_db(metrics.acp_right_db, suffix=" dB"))
 
     def set_hint_key(self, key: str) -> None:
         pass
@@ -276,8 +332,7 @@ class MonitorRfQualityPanel(QFrame):
         self._lbl_snr.setText(tr("monitor_rf_snr"))
         self._lbl_noise.setText(tr("monitor_rf_noise_floor"))
         self._lbl_offset.setText(tr("monitor_rf_carrier_offset"))
-        self._lbl_acp_l.setText(tr("monitor_rf_acp_left"))
-        self._lbl_acp_r.setText(tr("monitor_rf_acp_right"))
+        self._rds_title.setText(tr("monitor_rds_section"))
         for row, key in enumerate(self._rds_row_keys):
             item = self._rds_table.item(row, 0)
             if item is not None:

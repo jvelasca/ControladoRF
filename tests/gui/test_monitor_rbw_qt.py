@@ -15,9 +15,37 @@ from core.monitor.monitor_bw_sweep_logic import (
     sync_analysis_chain,
 )
 from core.monitor.spectrum_params import SpectrumParams
-from gui.monitor.monitor_bw_sweep_controls import MonitorRbwControl
+from gui.monitor.monitor_bw_sweep_controls import MonitorFftControl, MonitorRbwControl
 
 _app = QApplication.instance() or QApplication([])
+
+
+def test_rbw_visible_in_iq_analyzer_mode() -> None:
+    w = MonitorRbwControl()
+    p = SpectrumParams(
+        capture_mode="iq",
+        operating_mode="spectrum",
+        span_hz=19_000_000.0,
+        sample_rate_hz=19_000_000.0,
+        fft_auto=True,
+        fft_size=1024,
+    )
+    w.set_params(p)
+    assert w.isVisible()
+
+
+def test_fft_hidden_in_iq_uses_rbw_control() -> None:
+    w = MonitorFftControl()
+    p = SpectrumParams(
+        capture_mode="iq",
+        operating_mode="spectrum",
+        span_hz=18_000_000.0,
+        sample_rate_hz=18_000_000.0,
+        fft_auto=True,
+        fft_size=1024,
+    )
+    w.set_params(p)
+    assert not w.isVisible()
 
 
 def test_rbw_auto_to_manual_via_control() -> None:

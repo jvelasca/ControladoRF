@@ -50,8 +50,12 @@ if (-not $Notes) {
 }
 
 Write-Host "Publicando $Tag en $Repo ..." -ForegroundColor Cyan
-$existing = gh release view $Tag --repo $Repo 2>$null
-if ($LASTEXITCODE -eq 0) {
+$prev = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+gh release view $Tag --repo $Repo 2>$null | Out-Null
+$releaseExists = ($LASTEXITCODE -eq 0)
+$ErrorActionPreference = $prev
+if ($releaseExists) {
     foreach ($asset in $Assets) {
         gh release upload $Tag $asset --repo $Repo --clobber
     }

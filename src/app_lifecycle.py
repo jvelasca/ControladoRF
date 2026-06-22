@@ -8,7 +8,7 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from app_paths import bundle_path, is_frozen, logs_dir, workspace_data_dir
+from app_paths import bundle_path, configure_qt_runtime, is_frozen, logs_dir, workspace_data_dir
 from core import ApplicationServices
 from core.project_manager import ProjectManager
 from db import DatabaseService
@@ -33,8 +33,15 @@ class AppLifecycle:
 
     def start(self):
         self._ensure_workspace_seed()
+        configure_qt_runtime()
         init_logging(log_file=str(logs_dir() / "app.log"))
         self.app = QApplication(sys.argv)
+        if is_frozen():
+            from PyQt6.QtCore import QCoreApplication
+
+            plugins = bundle_path("PyQt6", "Qt6", "plugins")
+            if plugins.is_dir():
+                QCoreApplication.addLibraryPath(str(plugins))
         self.store = WorkspaceStore(str(workspace_data_dir()))
         self.controller = WorkspaceController(self.store)
         self._init_database()

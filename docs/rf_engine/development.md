@@ -18,6 +18,8 @@ Documento para quien modifique captura, análisis o integración GUI sin romper 
 
 4. **Análisis en el motor** — SUAV, hold y detector se aplican en `AnalysisPipeline` antes de llegar al widget.
 
+5. **Analizadores sweep-only** — RF Explorer y TinySA tienen `supports_iq_stream=False`. La política emite `analyzer_only_sweep`; la GUI bloquea SDR/demod vía `source_profile.py`. Ver [analyzer_sources.md](analyzer_sources.md).
+
 
 
 ## Flujo de un cambio de parámetro

@@ -201,10 +201,31 @@ def _decode_group_payload(blocks: list[int], state: RdsDecoderState) -> None:
             state.reference_number = lic
 
 
+def _one_pole_lpf(x: np.ndarray, alpha: float, y0: float) -> tuple[np.ndarray, float]:
+    """Filtro IIR paso bajo vectorizado (estado y0 entre bloques)."""
+    x = np.asarray(x, dtype=np.float64).reshape(-1)
+    n = x.size
+    if n == 0:
+        return x, y0
+    one_m = 1.0 - alpha
+    i = np.arange(n, dtype=np.float64)
+    pow_alpha = np.power(alpha, i)
+    w = x / np.maximum(pow_alpha, 1e-300)
+    cs = np.cumsum(one_m * w)
+    y = pow_alpha * (alpha * float(y0) + cs)
+    return y, float(y[-1])
+
+
+_RDS_MAX_BITS_PER_CHUNK = 64
+_RDS_DECODE_SCAN_MAX = 96
+
+
 def _decode_rds_groups(bits: list[int], state: RdsDecoderState) -> None:
     if len(bits) < 104:
         return
-    for offset in range(0, len(bits) - 103):
+    scan_span = 32 if state.synced else _RDS_DECODE_SCAN_MAX
+    scan_start = max(0, len(bits) - scan_span - 103)
+    for offset in range(scan_start, len(bits) - 103):
         chunk = bits[offset : offset + 104]
         blocks: list[int] = []
         ok = True
@@ -225,6 +246,64 @@ def _decode_rds_groups(bits: list[int], state: RdsDecoderState) -> None:
             state.status = f"PI {state.pi_code:04X}"
             if state.ps_name:
                 state.status += f" · {state.ps_name}"
+            if state.synced:
+                return
+
+
+def _extract_manchester_bits(
+    filtered: np.ndarray,
+    *,
+    sample_rate_hz: float,
+    state: RdsDecoderState,
+) -> list[int]:
+    """Decodifica bi-fase-L RDS (transición al inicio = 1, al medio = 0)."""
+    x = np.asarray(filtered, dtype=np.float64).reshape(-1)
+    n = x.size
+    if n < 16:
+        return []
+    bit_samples = float(sample_rate_hz) / RDS_BIT_RATE
+    half_bit = bit_samples * 0.5
+    threshold = max(float(np.std(x)) * 0.12, 1e-6)
+    bits: list[int] = []
+    pos = float(state.bit_phase)
+    prev_enc = int(state.last_symbol) & 1
+    bits_budget = _RDS_MAX_BITS_PER_CHUNK
+
+    while pos + bit_samples < n and bits_budget > 0:
+        start = int(pos)
+        end = min(n, int(pos + bit_samples))
+        mid = int(pos + half_bit)
+        if end - start < 4:
+            break
+        seg = x[start:end]
+        if seg.size < 5:
+            pos += bit_samples * 0.15
+            bits_budget -= 1
+            continue
+        dif = np.diff(seg)
+        quarter = max(1, len(dif) // 4)
+        head = dif[:quarter]
+        start_edge = float(np.max(np.abs(head))) > threshold if head.size else False
+        mid_lo = max(0, len(dif) // 2 - 1)
+        mid_hi = min(len(dif), mid_lo + 3)
+        mid_edge = float(np.max(np.abs(dif[mid_lo:mid_hi]))) > threshold
+
+        if start_edge:
+            enc = 1
+        elif mid_edge:
+            enc = 0
+        else:
+            pos += bit_samples * 0.15
+            continue
+
+        bits.append(enc ^ prev_enc)
+        prev_enc = enc
+        pos += bit_samples
+        bits_budget -= 1
+
+    state.bit_phase = pos - n
+    state.last_symbol = prev_enc
+    return bits
 
 
 def feed_rds_mpx(
@@ -246,36 +325,17 @@ def feed_rds_mpx(
     mixed_i = x * carrier_i
     mixed_q = x * carrier_q
     alpha = math.exp(-2.0 * math.pi * 2_400.0 / float(sample_rate_hz))
-    bb_i = np.zeros(n, dtype=np.float64)
-    bb_q = np.zeros(n, dtype=np.float64)
-    yi = state.lpf_i
-    yq = state.lpf_q
-    for i in range(n):
-        yi = alpha * yi + (1.0 - alpha) * float(mixed_i[i])
-        yq = alpha * yq + (1.0 - alpha) * float(mixed_q[i])
-        bb_i[i] = yi
-        bb_q[i] = yq
-    state.lpf_i = yi
-    state.lpf_q = yq
+    bb_i, state.lpf_i = _one_pole_lpf(mixed_i, alpha, state.lpf_i)
+    bb_q, state.lpf_q = _one_pole_lpf(mixed_q, alpha, state.lpf_q)
     state.mix_phase = (state.mix_phase + n * phase_inc) % (2.0 * math.pi)
 
-    samples_per_bit = float(sample_rate_hz) / RDS_BIT_RATE
-    bits: list[int] = []
-    pos = state.bit_phase
-    while pos + samples_per_bit < n:
-        start = int(pos)
-        end = int(pos + samples_per_bit)
-        symbol = 1 if float(np.mean(bb_i[start:end])) >= 0.0 else 0
-        diff = symbol ^ state.last_symbol
-        bits.append(diff)
-        state.last_symbol = symbol
-        pos += samples_per_bit
-    state.bit_phase = pos - n
+    filtered = bb_i
+    bits = _extract_manchester_bits(filtered, sample_rate_hz=sample_rate_hz, state=state)
 
     if bits:
         state.raw_bits.extend(bits)
-        if len(state.raw_bits) > 8192:
-            state.raw_bits = state.raw_bits[-4096:]
+        if len(state.raw_bits) > 4096:
+            state.raw_bits = state.raw_bits[-2048:]
         _decode_rds_groups(state.raw_bits, state)
     if state.synced and state.pi_code is not None and not state.status:
         state.status = f"PI {state.pi_code:04X}"

@@ -30,12 +30,21 @@ def plot_freq_bounds(
             return start, stop
     bounds = frame_freq_bounds(freqs_hz)
     if bounds is not None:
-        return bounds
-    if params.capture_mode == "iq":
-        start = float(params.center_freq_hz) - float(params.sample_rate_hz) / 2.0
-        stop = float(params.center_freq_hz) + float(params.sample_rate_hz) / 2.0
+        start, stop = bounds
+        if params.capture_mode == "iq":
+            from core.monitor.iq_fft import usable_iq_freq_bounds
+
+            u_start, u_stop = usable_iq_freq_bounds(
+                params.center_freq_hz, params.sample_rate_hz
+            )
+            start = max(start, u_start)
+            stop = min(stop, u_stop)
         if stop > start:
             return start, stop
+    if params.capture_mode == "iq":
+        from core.monitor.iq_fft import usable_iq_freq_bounds
+
+        return usable_iq_freq_bounds(params.center_freq_hz, params.sample_rate_hz)
     start = float(params.freq_start_hz())
     stop = float(params.freq_stop_hz())
     if stop <= start:
@@ -50,6 +59,7 @@ def resample_power_to_grid(
     start_hz: float,
     stop_hz: float,
     num_columns: int,
+    method: str = "linear",
 ) -> np.ndarray:
     """Interpola potencia (dBm) a una rejilla uniforme en frecuencia."""
     if num_columns < 2:
@@ -77,8 +87,22 @@ def resample_power_to_grid(
         plot_start = data_start
         plot_stop = data_stop
 
-    grid = np.linspace(plot_start, plot_stop, num_columns, dtype=float)
     floor = float(np.percentile(uniq_power, 5))
+    if method == "peak":
+        edges = np.linspace(plot_start, plot_stop, num_columns + 1, dtype=float)
+        bin_idx = np.digitize(uniq_freqs, edges) - 1
+        bin_idx = np.clip(bin_idx, 0, num_columns - 1)
+        out = np.full(num_columns, floor, dtype=np.float32)
+        for col in range(num_columns):
+            mask = bin_idx == col
+            if np.any(mask):
+                out[col] = float(np.max(uniq_power[mask]))
+            else:
+                mid = (edges[col] + edges[col + 1]) * 0.5
+                out[col] = float(np.interp(mid, uniq_freqs, uniq_power, left=floor, right=floor))
+        return out
+
+    grid = np.linspace(plot_start, plot_stop, num_columns, dtype=float)
     out = np.interp(grid, uniq_freqs, uniq_power, left=floor, right=floor)
     return out.astype(np.float32)
 
@@ -91,6 +115,8 @@ def resample_frame_to_plot(
     num_columns: int | None = None,
 ) -> tuple[np.ndarray, float, float]:
     """Devuelve potencia remuestreada y límites [start, stop] del eje."""
+    from core.monitor.monitor_bw_profile import plot_resample_method
+
     start, stop = plot_freq_bounds(params, freqs_hz)
     width = int(num_columns) if num_columns is not None else max(2, len(power_db))
     grid_power = resample_power_to_grid(
@@ -99,5 +125,6 @@ def resample_frame_to_plot(
         start_hz=start,
         stop_hz=stop,
         num_columns=width,
+        method=plot_resample_method(params),
     )
     return grid_power, start, stop

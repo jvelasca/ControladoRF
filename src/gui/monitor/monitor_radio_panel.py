@@ -42,11 +42,12 @@ from core.monitor.receive_mode_logic import (
 from core.monitor.monitor_mode_guard import demod_requires_sdr_mode
 from core.monitor.monitor_operating_mode import MonitorOperatingMode
 from core.monitor.spectrum_params import SpectrumParams
+from core.rf.source_ids import is_analyzer_only_source
 from gui.monitor.monitor_filled_value_slider import MonitorFilledValueSlider
 from gui.monitor.monitor_digital_panel import MonitorDigitalAnalysisPanel
 from gui.monitor.monitor_radio_display import MonitorDemodDisplay
 from gui.monitor.monitor_radio_toolbar import MonitorRadioToolbar
-from gui.monitor.monitor_radio_icons import make_audio_mute_icon
+from gui.monitor.monitor_radio_icons import make_audio_mute_icon, make_squelch_icon
 from gui.monitor.monitor_rf_quality_panel import MonitorRfQualityPanel
 from i18n.json_translation import tr
 
@@ -55,9 +56,9 @@ class MonitorRadioPanel(QWidget):
     """Controles de recepción; habilitados solo en modo SDR."""
 
     params_changed = pyqtSignal(object)
+    soft_param_patch = pyqtSignal(object)
     audio_volume_changed = pyqtSignal(float)
     auto_tune_requested = pyqtSignal()
-    fm_broadcast_requested = pyqtSignal()
     welle_cli_requested = pyqtSignal()
     mode_restriction = pyqtSignal(object)
 
@@ -101,7 +102,6 @@ class MonitorRadioPanel(QWidget):
 
         self._toolbar = MonitorRadioToolbar(self)
         self._toolbar.auto_tune_requested.connect(self.auto_tune_requested.emit)
-        self._toolbar.fm_broadcast_requested.connect(self.fm_broadcast_requested.emit)
         self._toolbar.wfm_stereo_toggled.connect(self._on_wfm_stereo_toggled)
         self._toolbar.wfm_rds_toggled.connect(self._on_wfm_rds_toggled)
         self._toolbar.show_demod_bw_toggled.connect(self._on_show_demod_bw_toggled)
@@ -182,6 +182,23 @@ class MonitorRadioPanel(QWidget):
         self._squelch_slider.setToolTip(tr("monitor_radio_squelch_tip"))
         self._squelch_slider.valueChanged.connect(self._on_squelch_slider_changed)
 
+        self._squelch_btn = QToolButton()
+        self._squelch_btn.setObjectName("MonitorRadioSquelchBtn")
+        self._squelch_btn.setCheckable(True)
+        self._squelch_btn.setChecked(True)
+        self._squelch_btn.setAutoRaise(True)
+        self._squelch_btn.setFixedSize(28, 28)
+        self._squelch_btn.setToolTip(tr("monitor_radio_squelch_enable_tip"))
+        self._squelch_btn.toggled.connect(self._on_squelch_toggled)
+
+        squelch_row = QHBoxLayout()
+        squelch_row.setContentsMargins(0, 0, 0, 0)
+        squelch_row.setSpacing(6)
+        squelch_row.addWidget(self._squelch_btn)
+        squelch_row.addWidget(self._squelch_slider, stretch=1)
+        squelch_host = QWidget()
+        squelch_host.setLayout(squelch_row)
+
         self._volume_slider = MonitorFilledValueSlider(
             minimum=0.0,
             maximum=100.0,
@@ -217,7 +234,7 @@ class MonitorRadioPanel(QWidget):
         form.addRow(tr("monitor_radio_noise_blanker"), self._noise_blank_spin)
         form.addRow(tr("monitor_radio_agc_attack"), self._agc_attack_spin)
         form.addRow(tr("monitor_radio_agc_decay"), self._agc_decay_spin)
-        form.addRow(tr("monitor_radio_squelch"), self._squelch_slider)
+        form.addRow(tr("monitor_radio_squelch"), squelch_host)
         form.addRow(tr("monitor_radio_volume"), volume_host)
         self._mode_form = form
         layout.addWidget(self._form_host)
@@ -266,6 +283,7 @@ class MonitorRadioPanel(QWidget):
             self._noise_blank_spin,
             self._agc_attack_spin,
             self._agc_decay_spin,
+            self._squelch_btn,
             self._squelch_slider,
             self._volume_slider,
             self._mute_btn,
@@ -286,6 +304,7 @@ class MonitorRadioPanel(QWidget):
             self._noise_blank_spin,
             self._agc_attack_spin,
             self._agc_decay_spin,
+            self._squelch_btn,
             self._squelch_slider,
             self._volume_slider,
             self._mute_btn,
@@ -300,6 +319,7 @@ class MonitorRadioPanel(QWidget):
                 widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
         self._rf_quality = MonitorRfQualityPanel(self)
+        self._rf_quality.bandwidth_changed.connect(self._on_rf_bandwidth_changed)
         layout.addWidget(self._rf_quality)
 
         layout.addStretch(1)
@@ -331,6 +351,17 @@ class MonitorRadioPanel(QWidget):
         self._params = updated
         self.params_changed.emit(updated)
 
+    def _emit_soft_param_patch(self, **fields: object) -> None:
+        """Parche mínimo de toggles WFM — solo los campos tocados (evita pisar estado vivo)."""
+        if self._mode is not MonitorOperatingMode.SDR:
+            self._notify_demod_blocked()
+            return
+        updated = self._params.copy()
+        for key, value in fields.items():
+            setattr(updated, key, value)
+        self._params = updated
+        self.soft_param_patch.emit(dict(fields))
+
     def _emit_receive_patch(self, *_args) -> None:
         if self._mode is not MonitorOperatingMode.SDR:
             self._notify_demod_blocked()
@@ -354,8 +385,25 @@ class MonitorRadioPanel(QWidget):
             updated = refresh_digital_profile_for_vfo(updated)
         self._params = updated
         self._sync_digital_widgets_from_params()
+        self._sync_rf_bandwidth_strip()
         self.params_changed.emit(updated)
         self._refresh_mode_ui()
+
+    def _apply_toolbar_toggle_fields(self, updated: SpectrumParams) -> None:
+        if self._toolbar is not None:
+            for attr, field in (
+                ("_stereo_btn", "demod_wfm_stereo"),
+                ("_rds_btn", "demod_wfm_rds"),
+                ("_bw_btn", "show_demod_bandwidth"),
+                ("_lowpass_btn", "demod_wfm_lowpass"),
+                ("_iq_corr_btn", "demod_iq_correction"),
+                ("_iq_inv_btn", "demod_iq_invert"),
+            ):
+                btn = getattr(self._toolbar, attr, None)
+                if btn is not None:
+                    setattr(updated, field, bool(btn.isChecked()))
+        if self._mute_btn is not None:
+            updated.audio_muted = bool(self._mute_btn.isChecked())
 
     def _apply_common_fields(self, updated: SpectrumParams) -> None:
         if self._vfo_spin is not None:
@@ -382,6 +430,8 @@ class MonitorRadioPanel(QWidget):
                 updated.demod_agc_decay = float(self._agc_decay_spin.value())
             if self._squelch_slider is not None:
                 updated.squelch_db = float(self._squelch_slider.value())
+            if self._squelch_btn is not None:
+                updated.squelch_enabled = bool(self._squelch_btn.isChecked())
         if is_digital_receive_mode(updated):
             if self._digital_mod_combo is not None and self._digital_mod_combo.isEnabled():
                 order = self._digital_mod_combo.currentData()
@@ -389,54 +439,63 @@ class MonitorRadioPanel(QWidget):
                     updated.digital_mod_order = int(order)
             if self._digital_symbol_spin is not None and self._digital_symbol_spin.isEnabled():
                 updated.digital_symbol_rate_hz = float(self._digital_symbol_spin.value())
-
-    def _on_wfm_option_toggled(self) -> None:
-        self._emit_receive_patch()
+        self._apply_toolbar_toggle_fields(updated)
 
     def _on_wfm_stereo_toggled(self, checked: bool) -> None:
-        if self._mode is not MonitorOperatingMode.SDR:
-            return
-        self._params = self._params.copy()
-        self._params.demod_wfm_stereo = bool(checked)
-        self._on_wfm_option_toggled()
+        self._emit_soft_param_patch(demod_wfm_stereo=bool(checked))
 
     def _on_wfm_rds_toggled(self, checked: bool) -> None:
-        if self._mode is not MonitorOperatingMode.SDR:
-            return
-        self._params = self._params.copy()
-        self._params.demod_wfm_rds = bool(checked)
-        self._on_wfm_option_toggled()
+        self._emit_soft_param_patch(demod_wfm_rds=bool(checked))
 
     def _on_show_demod_bw_toggled(self, checked: bool) -> None:
-        if self._mode is not MonitorOperatingMode.SDR:
-            return
-        self._params = self._params.copy()
-        self._params.show_demod_bandwidth = bool(checked)
-        self.params_changed.emit(self._params)
+        self._emit_soft_param_patch(show_demod_bandwidth=bool(checked))
 
     def _on_wfm_lowpass_toggled(self, checked: bool) -> None:
-        if self._mode is not MonitorOperatingMode.SDR:
-            return
-        self._params = self._params.copy()
-        self._params.demod_wfm_lowpass = bool(checked)
-        self._on_wfm_option_toggled()
+        self._emit_soft_param_patch(demod_wfm_lowpass=bool(checked))
 
     def _on_iq_correction_toggled(self, checked: bool) -> None:
-        if self._mode is not MonitorOperatingMode.SDR:
-            return
-        self._params = self._params.copy()
-        self._params.demod_iq_correction = bool(checked)
-        self._on_wfm_option_toggled()
+        self._emit_soft_param_patch(demod_iq_correction=bool(checked))
 
     def _on_iq_invert_toggled(self, checked: bool) -> None:
+        self._emit_soft_param_patch(demod_iq_invert=bool(checked))
+
+    def _on_rf_bandwidth_changed(self, bw_hz: float) -> None:
         if self._mode is not MonitorOperatingMode.SDR:
             return
-        self._params = self._params.copy()
-        self._params.demod_iq_invert = bool(checked)
-        self._on_wfm_option_toggled()
+        updated = self._params.copy()
+        updated.demod_bandwidth_hz = float(bw_hz)
+        if self._bw_spin is not None:
+            self._bw_spin.blockSignals(True)
+            self._bw_spin.setValue(int(round(bw_hz)))
+            self._bw_spin.blockSignals(False)
+        self._params = updated
+        self.params_changed.emit(updated)
+
+    def _sync_rf_bandwidth_strip(self) -> None:
+        if self._rf_quality is None or not is_analog_receive_mode(self._params):
+            return
+        mode = normalize_analog_demod_mode(self._params.demod_mode)
+        limits = demod_ui_limits(mode)
+        self._rf_quality.configure_demod_bandwidth(
+            demod_bw_hz=float(self._params.demod_bandwidth_hz),
+            min_hz=float(limits.bw_min_hz),
+            max_hz=float(limits.bw_max_hz),
+            step_hz=float(limits.bw_step_hz),
+        )
 
     def _on_squelch_slider_changed(self, _value: float) -> None:
         self._emit_receive_patch()
+
+    def _on_squelch_toggled(self, enabled: bool) -> None:
+        if self._mode is not MonitorOperatingMode.SDR:
+            return
+        updated = self._params.copy()
+        updated.squelch_enabled = bool(enabled)
+        self._params = updated
+        if self._squelch_slider is not None:
+            self._squelch_slider.setEnabled(enabled)
+        self._refresh_squelch_button()
+        self.params_changed.emit(updated)
 
     def _on_volume_changed(self, value: float) -> None:
         if self._mode is not MonitorOperatingMode.SDR:
@@ -454,6 +513,20 @@ class MonitorRadioPanel(QWidget):
         self._params = updated
         self._refresh_mute_button()
         self.params_changed.emit(updated)
+
+    def _refresh_squelch_button(self) -> None:
+        if self._squelch_btn is None:
+            return
+        enabled = bool(self._params.squelch_enabled)
+        self._squelch_btn.blockSignals(True)
+        self._squelch_btn.setChecked(enabled)
+        self._squelch_btn.setIcon(make_squelch_icon(self, enabled=enabled))
+        self._squelch_btn.setToolTip(
+            tr("monitor_radio_squelch_on") if enabled else tr("monitor_radio_squelch_off")
+        )
+        self._squelch_btn.blockSignals(False)
+        if self._squelch_slider is not None:
+            self._squelch_slider.setEnabled(enabled)
 
     def _refresh_mute_button(self) -> None:
         if self._mute_btn is None:
@@ -498,7 +571,10 @@ class MonitorRadioPanel(QWidget):
         if self._demod_display is not None and is_analog_receive_mode(self._params):
             self._demod_display.update_state(state)
         if self._rf_quality is not None and (self._params.demod_mode or "").lower() in ("wfm", "fm"):
-            self._rf_quality.update_rds_info(state)
+            if bool(self._params.demod_wfm_rds):
+                self._rf_quality.update_rds_info(state)
+            else:
+                self._rf_quality.clear_rds_info()
 
     def update_digital_analysis(self, state) -> None:
         if not is_digital_receive_mode(self._params):
@@ -553,7 +629,41 @@ class MonitorRadioPanel(QWidget):
         self._params = params.copy()
         self._mode = MonitorOperatingMode.normalize(params.operating_mode)
         self._sync_widgets_from_params()
+        self._sync_rf_bandwidth_strip()
         self._refresh_mode_ui()
+
+    def sync_params_snapshot(self, params: SpectrumParams) -> None:
+        """Actualiza _params interno sin repintar widgets (tras parche soft del controlador)."""
+        self._params = params.copy()
+        self._mode = MonitorOperatingMode.normalize(params.operating_mode)
+
+    def sync_bandwidth_ui(self, params: SpectrumParams) -> None:
+        """Franja BW demod + botón overlay — sin repintar todo el panel."""
+        self._params = self._params.copy()
+        self._params.demod_mode = params.demod_mode
+        self._params.demod_bandwidth_hz = float(params.demod_bandwidth_hz)
+        self._params.show_demod_bandwidth = bool(params.show_demod_bandwidth)
+        self._params.operating_mode = params.operating_mode
+        self._params.capture_mode = params.capture_mode
+        self._params.audio_enabled = bool(params.audio_enabled)
+        self._params.selected_freq_hz = float(params.selected_freq_hz)
+        self._params.vfo_freq_hz = float(params.vfo_freq_hz)
+        self._params.freq_readout = str(params.freq_readout or "fc")
+        self._params.demod_wfm_stereo = bool(params.demod_wfm_stereo)
+        self._params.demod_wfm_rds = bool(params.demod_wfm_rds)
+        self._params.demod_wfm_lowpass = bool(getattr(params, "demod_wfm_lowpass", True))
+        self._params.demod_iq_correction = bool(getattr(params, "demod_iq_correction", False))
+        self._params.demod_iq_invert = bool(getattr(params, "demod_iq_invert", False))
+        self._sync_rf_bandwidth_strip()
+        if self._toolbar is not None:
+            self._toolbar.sync_wfm_options(
+                stereo=bool(self._params.demod_wfm_stereo),
+                rds=bool(self._params.demod_wfm_rds),
+                show_demod_bw=bool(self._params.show_demod_bandwidth),
+                lowpass=bool(self._params.demod_wfm_lowpass),
+                iq_correction=bool(self._params.demod_iq_correction),
+                iq_invert=bool(self._params.demod_iq_invert),
+            )
 
     def _sync_widgets_from_params(self) -> None:
         p = self._params
@@ -576,6 +686,8 @@ class MonitorRadioPanel(QWidget):
                 self._squelch_slider.block_signals(True)
                 self._squelch_slider.set_value(p.squelch_db)
                 self._squelch_slider.block_signals(False)
+        self._refresh_squelch_button()
+        self._sync_rf_bandwidth_strip()
         if self._volume_slider is not None and not self._volume_slider.is_interacting():
             target = int(round(p.audio_volume * 100))
             if abs(self._volume_slider.value() - target) >= 1:
@@ -642,6 +754,7 @@ class MonitorRadioPanel(QWidget):
         self._set_form_row_visible(self._noise_blank_spin, show_dsb or show_wfm)
         self._set_form_row_visible(self._agc_attack_spin, show_dsb)
         self._set_form_row_visible(self._agc_decay_spin, show_dsb)
+        self._set_form_row_visible(self._bw_spin, False)
         if self._deemph_combo is not None:
             is_nfm = mode == "nfm"
             self._deemph_combo.setEnabled(show_deemph and not is_nfm)
@@ -663,6 +776,13 @@ class MonitorRadioPanel(QWidget):
                     int(round(self._params.demod_bandwidth_hz or limits.bw_min_hz))
                 )
                 self._bw_spin.blockSignals(False)
+        if self._rf_quality is not None:
+            self._rf_quality.configure_demod_bandwidth(
+                demod_bw_hz=float(self._params.demod_bandwidth_hz),
+                min_hz=float(limits.bw_min_hz),
+                max_hz=float(limits.bw_max_hz),
+                step_hz=float(limits.bw_step_hz),
+            )
         if self._snap_spin is not None:
             self._snap_spin.setRange(limits.snap_min_hz, limits.snap_max_hz)
             self._snap_spin.setSingleStep(limits.snap_step_hz)
@@ -698,13 +818,21 @@ class MonitorRadioPanel(QWidget):
 
     def _refresh_mode_ui(self) -> None:
         sdr = self._mode is MonitorOperatingMode.SDR
+        analyzer_only = is_analyzer_only_source(self._params.source_id)
         iq_capture = self._params.capture_mode == "iq"
         is_dig = sdr and is_digital_receive_mode(self._params)
         is_analog = sdr and is_analog_receive_mode(self._params)
         digital_active = iq_capture and is_dig
 
         if self._mode_banner is not None:
-            if not sdr:
+            if analyzer_only:
+                self._mode_banner.setText(tr("monitor_source_radio_analyzer_only_banner"))
+                self._mode_banner.setStyleSheet(
+                    "color: #e0a060; background: rgba(224, 160, 96, 24);"
+                    "padding: 6px 8px; border-radius: 4px;"
+                )
+                self._mode_banner.setVisible(True)
+            elif not sdr:
                 self._mode_banner.setText(tr("monitor_radio_spectrum_mode_banner"))
                 self._mode_banner.setStyleSheet(
                     "color: #c9a227; background: rgba(201, 162, 39, 24);"
@@ -714,21 +842,21 @@ class MonitorRadioPanel(QWidget):
             else:
                 self._mode_banner.setVisible(False)
 
+        effective_sdr = sdr and not analyzer_only
         if self._form_host is not None:
-            self._form_host.setEnabled(sdr)
+            self._form_host.setEnabled(effective_sdr)
         if self._toolbar is not None:
-            self._toolbar.set_auto_enabled(sdr and is_analog)
-            show_fm = sdr and is_analog and normalize_analog_demod_mode(self._params.demod_mode) == "wfm"
-            self._toolbar.set_fm_enabled(show_fm)
+            self._toolbar.set_auto_enabled(effective_sdr and is_analog)
+            show_fm = effective_sdr and is_analog and normalize_analog_demod_mode(self._params.demod_mode) == "wfm"
             self._toolbar.set_wfm_toggles_visible(show_fm)
-            self._toolbar.set_wfm_toggles_enabled(sdr and show_fm)
+            self._toolbar.set_wfm_toggles_enabled(effective_sdr and show_fm)
 
         for widget in (self._receive_combo, self._vfo_spin):
             if widget is not None:
-                widget.setEnabled(sdr)
+                widget.setEnabled(effective_sdr)
 
         for widget in self._analog_widgets:
-            widget.setEnabled(sdr and is_analog)
+            widget.setEnabled(effective_sdr and is_analog)
             widget.setVisible(not is_dig or widget is not self._demod_display)
 
         if self._demod_display is not None:
@@ -738,17 +866,17 @@ class MonitorRadioPanel(QWidget):
 
         if self._digital_form_host is not None:
             self._digital_form_host.setVisible(is_dig)
-            self._digital_form_host.setEnabled(sdr and is_dig and iq_capture)
+            self._digital_form_host.setEnabled(effective_sdr and is_dig and iq_capture)
 
         for widget in self._digital_widgets:
-            widget.setEnabled(sdr and is_dig and iq_capture)
+            widget.setEnabled(effective_sdr and is_dig and iq_capture)
             widget.setVisible(is_dig)
 
         if self._digital_panel is not None:
             self._digital_panel.setVisible(is_dig)
             is_dab = is_dig and self._params.digital_profile == "dab_iii"
-            self._digital_panel.set_welle_controls_visible(sdr and is_dab)
-            if not sdr or not is_dig:
+            self._digital_panel.set_welle_controls_visible(effective_sdr and is_dab)
+            if not effective_sdr or not is_dig:
                 self._digital_panel.set_idle(message=tr("monitor_digital_select_dig"))
             elif not iq_capture:
                 self._digital_panel.set_idle(message=tr("monitor_digital_iq_required"))
@@ -756,13 +884,19 @@ class MonitorRadioPanel(QWidget):
                 self._digital_panel.set_idle(message=tr("monitor_digital_idle"))
 
         if self._rf_quality is not None:
-            self._rf_quality.setVisible(sdr and (is_analog or is_dig))
-            if not sdr:
+            self._rf_quality.setVisible(effective_sdr and (is_analog or is_dig))
+            if analyzer_only:
+                self._rf_quality.set_idle(message=tr("monitor_source_rf_quality_analyzer_only"))
+            elif not sdr:
                 self._rf_quality.set_idle(message=tr("monitor_rf_sdr_only"))
             elif self._mode is MonitorOperatingMode.SUPERVISION:
                 self._rf_quality.set_idle(message=tr("monitor_rf_supervision_off"))
 
-        demod_tip = tr("monitor_mode_warn_demod_sdr_only")
+        demod_tip = (
+            tr("monitor_source_warn_demod_analyzer_only")
+            if analyzer_only
+            else tr("monitor_mode_warn_demod_sdr_only")
+        )
         for widget in self._demod_click_targets:
             if widget is None:
                 continue

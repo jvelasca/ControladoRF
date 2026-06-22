@@ -172,10 +172,48 @@ Referencia tipo Keysight/R&S (modo analizador, RBW/FFT/SWT en AUTO):
 | Estabilidad RBW | Histéresis ~12 % al variar SPAN (evita saltos 19↔21 MHz FM) |
 | IQ ↔ barrido | SPAN ≤ 20 MHz → IQ; SPAN > 20 MHz → barrido |
 | RBW fino en barrido | Si RBW manual < 100 kHz y SPAN ≤ 20 MHz → cambio automático a IQ |
+| RBW manual en barrido amplio | SPAN > 20 MHz: `rbw_auto = false` usa `rbw_hz` del operador (clamp + snap preset) |
 | FFT en barrido | Desacoplado de RBW: `fft_auto` controla rejilla; `rbw_auto` controla hardware |
 | SUAV AUTO | OFF (1 bin); el usuario puede activar SUAV manual |
 
 El override manual (menús RBW/FFT/SWT/SUAV) no se modifica al cambiar SPAN salvo políticas de captura (IQ/barrido).
+
+---
+
+## 11. Traza fina IQ (botón F en RBW)
+
+Solo visible en **modo IQ** (SPAN ≤ ~20 MHz). Toggle **F ON / F OFF** en la fila RBW de la toolbar (mismo patrón visual que **Pre ON/OFF** en LNA).
+
+| F ON | F OFF |
+|------|-------|
+| `iq_trace_sharp = true` | valor por defecto |
+| Detector **peak** | detector habitual |
+| Remuestreo columna **peak** | linear |
+| FFT AUTO → 2048 si SR ≥ 10 MHz | FFT AUTO estándar |
+| SUAV manual 3 bins | SUAV según perfil |
+
+Parches: `patch_iq_trace_sharp()` en `monitor_bw_sweep_logic.py`. Menú contextual en `monitor_bw_menus.populate_sharp_trace_menu` (acceso secundario).
+
+---
+
+## 12. Toolbar — layout uniforme
+
+Constantes en `monitor_lcd_styles.py`:
+
+- `MONITOR_TOOLBAR_GROUP_HEIGHT = 56` — marcos FC/SPAN, RF, BW, modo.
+- `MONITOR_TOOLBAR_CONTROL_HEIGHT = 46` — controles numéricos y botones Analizador/SDR.
+
+Archivos: `monitor_toolbar.py`, `monitor_lcd_styles.py`.
+
+---
+
+## 13. Menú SPAN (…)
+
+`gui/monitor/monitor_span_menu.py` — compartido por toolbar, overlay y franja azul:
+
+- Modos: manual, completo, cero, último (`patch_span_mode`).
+- Acción «Editar lapso» → `edit_span_dialog`.
+- Avisos modo analizador vía `span_mode_requires_analyzer_mode` / `span_requires_analyzer_mode`.
 
 ---
 
@@ -187,6 +225,11 @@ El override manual (menús RBW/FFT/SWT/SUAV) no se modifica al cambiar SPAN salv
 | `tests/core/test_monitor_bw_profile.py` | Etiquetas FFT vs SUAV OFF |
 | `tests/core/test_monitor_bw_sweep.py` | Parches, persistencia, migración legacy |
 | `tests/core/test_trace_vbw.py` | Kernel espacial (`AnalysisPipeline`) |
+| `tests/core/test_sweep_manual_rbw_wide.py` | RBW manual en barrido > 20 MHz |
+| `tests/core/test_iq_trace_sharp.py` | Traza fina F ON |
+| `tests/gui/test_monitor_toolbar_qt.py` | Toolbar, AMPT AUTO, altura marcos |
+| `tests/gui/test_monitor_span_menu_qt.py` | Menú SPAN (…) |
+| `tests/gui/test_monitor_rbw_sharp_qt.py` | Botón F junto a RBW |
 | `tests/gui/test_monitor_vbw_qt.py` | Widget `MonitorVbwControl` |
 
 ---

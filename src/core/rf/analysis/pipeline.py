@@ -6,9 +6,16 @@ import numpy as np
 from core.rf.types import AcquisitionMode, AnalysisConfig, SpectrumFrame
 
 
-def apply_detector(power_db: np.ndarray, detector: str) -> np.ndarray:
+def apply_detector(
+    power_db: np.ndarray,
+    detector: str,
+    *,
+    acquisition_mode: AcquisitionMode | None = None,
+) -> np.ndarray:
     x = np.asarray(power_db, dtype=float)
     if x.size == 0:
+        return x
+    if acquisition_mode is AcquisitionMode.IQ_STREAM:
         return x
     mode = (detector or "rms").lower()
     if mode in ("peak", "neg_peak", "sample", "average"):
@@ -82,8 +89,9 @@ class AnalysisPipeline:
         )
         if not config.trace_smooth_auto and config.trace_smooth_bins > 1:
             power = apply_trace_smooth(power, config)
+        acq_mode = frame.metadata.acquisition_mode if frame.metadata is not None else None
         if not is_sweep:
-            power = apply_detector(power, config.detector)
+            power = apply_detector(power, config.detector, acquisition_mode=acq_mode)
         power = self._apply_trace_mode(power, config)
         return SpectrumFrame(
             freqs_hz=frame.freqs_hz,

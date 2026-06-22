@@ -12,11 +12,11 @@ SPAN_MIN_SWEEP_HZ = 100_000.0
 
 
 def _base_source_id(source_id: str) -> str:
+    from core.rf.source_ids import device_family
+
     if not source_id:
         return "mock"
-    if source_id.startswith("hackrf"):
-        return "hackrf"
-    return source_id.split("_")[0]
+    return device_family(source_id)
 
 
 def source_freq_limits_hz(source_id: str) -> Tuple[float, float]:
@@ -28,6 +28,10 @@ def source_freq_limits_hz(source_id: str) -> Tuple[float, float]:
         return 24_000_000.0, 1_800_000_000.0
     if base == "airspy_hf":
         return 50_000.0, 31_000_000.0
+    if base == "rf_explorer":
+        return 15_000_000.0, 2_700_000_000.0
+    if base == "tinysa":
+        return 100_000.0, 960_000_000.0
     return 1_000_000.0, 6_000_000_000.0
 
 
@@ -40,6 +44,8 @@ def instant_span_hz_for_source(source_id: str) -> float:
         return 10_000_000.0
     if base == "airspy_hf":
         return 660_000.0
+    if base in ("rf_explorer", "tinysa"):
+        return 100_000.0
     return 20_000_000.0
 
 
@@ -130,6 +136,8 @@ def profile_for_params(params: SpectrumParams) -> MonitorModeProfile:
 
 def refresh_capture_and_span_limits(params: SpectrumParams) -> None:
     """Recalcula max_span, capture_mode y acota SPAN al cambiar modo o FC."""
+    from core.rf.source_ids import is_analyzer_only_source
+
     mode = normalize_operating_mode(params.operating_mode)
     params.operating_mode = mode.value
     params.max_span_hz = max_span_hz_for_source(
@@ -138,6 +146,18 @@ def refresh_capture_and_span_limits(params: SpectrumParams) -> None:
         center_freq_hz=params.center_freq_hz,
     )
     instant = instant_span_hz_for_source(params.source_id)
+
+    if is_analyzer_only_source(params.source_id):
+        params.operating_mode = MonitorOperatingMode.SPECTRUM.value
+        mode = MonitorOperatingMode.SPECTRUM
+        params.capture_mode = "sweep"
+        params.audio_enabled = False
+        if not params.supervision_dwell_active:
+            params.digital_analysis_enabled = False
+        params.supervision_enabled = True
+        params.sync_marker_window_from_span()
+        params.apply_span_mode()
+        return
 
     if mode is MonitorOperatingMode.SDR:
         params.capture_mode = "iq"

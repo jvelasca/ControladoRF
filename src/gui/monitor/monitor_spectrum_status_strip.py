@@ -227,11 +227,12 @@ class MonitorSpectrumStatusStrip(QFrame):
             return
         mode_key = "monitor_status_cap_iq" if tel.acquisition_mode == "iq_stream" else "monitor_status_cap_sweep"
         cap_parts = [tr(mode_key)]
-        if tel.frame_bins > 0:
-            cap_parts.append(f"{tel.frame_bins} pts")
-        if tel.rbw_effective_hz > 0:
-            cap_parts.append(format_bw_hz(tel.rbw_effective_hz))
-        if tel.last_capture_ms > 0:
+        if not params.status_show_rbw:
+            if tel.frame_bins > 0:
+                cap_parts.append(f"{tel.frame_bins} pts")
+            if tel.rbw_effective_hz > 0:
+                cap_parts.append(format_bw_hz(tel.rbw_effective_hz))
+        if tel.last_capture_ms > 0 and tel.acquisition_mode != "iq_stream":
             cap_parts.append(f"{tel.last_capture_ms:.0f} ms")
         self._set_field_styled(
             self._capture_field,
@@ -318,22 +319,36 @@ class MonitorSpectrumStatusStrip(QFrame):
         else:
             self._fi_filter_field.hide()
 
-        from core.monitor.monitor_bw_profile import format_resolution_status, format_smoothing_status
+        from core.monitor.monitor_bw_profile import (
+            format_resolution_status,
+            format_smoothing_status,
+            uses_iq_resolution,
+        )
 
         rbw_text = format_resolution_status(params)
         vbw_text = format_smoothing_status(params)
-        swt_val = format_sweep_ms(effective_sweep_time_ms(params))
-        swt_text = swt_val
-        trigger_mode = params.sweep_trigger_mode
-        if trigger_mode == "manual":
-            swt_text += f" · {tr('monitor_sweep_trigger_manual')}"
-        elif trigger_mode == "periodic":
-            swt_text += f" · {tr('monitor_sweep_trigger_periodic')} {params.sweep_trigger_period_sec:g}s"
+        if params.capture_mode == "iq":
+            swt_text = tr("monitor_lcd_swt_na")
+            sweep_tone = "normal"
+        else:
+            swt_val = format_sweep_ms(effective_sweep_time_ms(params))
+            swt_text = swt_val
+            trigger_mode = params.sweep_trigger_mode
+            if trigger_mode == "manual":
+                swt_text += f" · {tr('monitor_sweep_trigger_manual')}"
+            elif trigger_mode == "periodic":
+                swt_text += f" · {tr('monitor_sweep_trigger_periodic')} {params.sweep_trigger_period_sec:g}s"
+            sweep_tone = (
+                "special"
+                if trigger_mode != "continuous"
+                else ("auto" if params.sweep_auto else "manual")
+            )
+        rbw_auto = params.fft_auto if uses_iq_resolution(params) else params.rbw_auto
         self._set_field_styled(
             self._rbw_field,
             params.status_show_rbw,
             tr("monitor_status_line_resolution").format(value=rbw_text),
-            tone="auto" if params.rbw_auto else "manual",
+            tone="auto" if rbw_auto else "manual",
         )
         self._set_field_styled(
             self._vbw_field,
@@ -341,7 +356,6 @@ class MonitorSpectrumStatusStrip(QFrame):
             tr("monitor_status_line_smooth").format(value=vbw_text),
             tone="auto" if params.trace_smooth_auto else "manual",
         )
-        sweep_tone = "special" if trigger_mode != "continuous" else ("auto" if params.sweep_auto else "manual")
         self._set_field_styled(
             self._sweep_field,
             params.status_show_sweep,

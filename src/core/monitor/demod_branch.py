@@ -103,10 +103,17 @@ class DemodBranch:
         """Tras hueco en buffer IQ — reinicia continuidad FM sin borrar AGC/VU."""
         self._stream.reset_signal()
 
-    def relax_squelch(self) -> None:
-        """Tras bajar umbral de squelch — permite reabrir audio de inmediato."""
-        self._stream.squelch_open = True
+    def reset_squelch_tracking(self, *, force_reeval: bool = False) -> None:
+        """Reinicia piso de ruido al mover umbral (respuesta suave del squelch)."""
         self._stream.squelch_noise_floor_dbfs = -120.0
+        if force_reeval:
+            self._stream.last_squelch_threshold_db = -120.0
+
+    def relax_squelch(self) -> None:
+        """Squelch desactivado o tras reconfig — audio siempre audible."""
+        self._stream.squelch_noise_floor_dbfs = -120.0
+        self._stream.last_squelch_threshold_db = -120.0
+        self._stream.squelch_open = True
 
     def process_iq(
         self,

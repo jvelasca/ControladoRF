@@ -524,6 +524,13 @@ class ModuleWorkspaceWidget(QWidget):
             return
         self._inventory_resolver = resolver
 
+    def set_channelization_service(self, service) -> None:
+        if self.module_id != "inventario_rf":
+            return
+        _, prop, _ = self.get_inventory_panel_contents()
+        if prop is not None and hasattr(prop, "set_channelization_service"):
+            prop.set_channelization_service(service)
+
     def _emit_layout_changed(self, *_args) -> None:
         self._cache_splitter_sizes()
         if self._on_layout_changed:
@@ -562,6 +569,7 @@ class ModuleWorkspaceWidget(QWidget):
 
     def _capture_panel_content_state(self) -> Dict[str, Any]:
         if self.module_id == "monitor" and self._monitor_controller is not None:
+            self._monitor_controller.flush_persisted_state()
             return {"monitor": self._monitor_controller.get_persisted_params()}
         if self.module_id != "inventario_rf":
             return {}

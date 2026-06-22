@@ -34,6 +34,16 @@ def uses_iq_resolution(params: SpectrumParams) -> bool:
     return params.capture_mode == "iq"
 
 
+def iq_trace_sharp_active(params: SpectrumParams) -> bool:
+    """Traza fina IQ: remuestreo por pico y FFT AUTO ampliada en span ancho."""
+    return uses_iq_resolution(params) and bool(getattr(params, "iq_trace_sharp", False))
+
+
+def plot_resample_method(params: SpectrumParams) -> str:
+    """Método de remuestreo al pintar espectro/waterfall."""
+    return "peak" if iq_trace_sharp_active(params) else "linear"
+
+
 def resolution_title_key(params: SpectrumParams) -> str:
     """Clave i18n del título LCD de resolución (FFT o RBW)."""
     return "monitor_lcd_fft" if uses_iq_resolution(params) else "monitor_lcd_rbw"

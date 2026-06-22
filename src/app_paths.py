@@ -62,3 +62,17 @@ def logs_dir() -> Path:
         path = project_root() / "logs"
     path.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def configure_qt_runtime() -> None:
+    """Rutas Qt/plugins en builds PyInstaller (audio QAudioSink, iconos, etc.)."""
+    if not is_frozen():
+        return
+    import os
+
+    plugins = bundle_path("PyQt6", "Qt6", "plugins")
+    if plugins.is_dir():
+        os.environ.setdefault("QT_PLUGIN_PATH", str(plugins))
+        bin_dir = bundle_path("PyQt6", "Qt6", "bin")
+        if bin_dir.is_dir():
+            os.environ.setdefault("PATH", str(bin_dir) + os.pathsep + os.environ.get("PATH", ""))

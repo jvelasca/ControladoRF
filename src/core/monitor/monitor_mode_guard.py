@@ -11,6 +11,7 @@ from core.monitor.monitor_mode_profile import (
 )
 from core.monitor.monitor_operating_mode import MonitorOperatingMode
 from core.monitor.spectrum_params import SpectrumParams
+from core.rf.source_ids import is_analyzer_only_source
 
 
 @dataclass(frozen=True)
@@ -62,9 +63,24 @@ def span_mode_requires_analyzer_mode(
 
 def demod_requires_sdr_mode(params: SpectrumParams) -> ModeRestriction | None:
     """Demodulación, audio o recepción DIG."""
+    if is_analyzer_only_source(params.source_id):
+        return ModeRestriction("monitor_source_warn_demod_analyzer_only")
     if params.operating_mode_enum() is MonitorOperatingMode.SDR:
         return None
     return ModeRestriction("monitor_mode_warn_demod_sdr_only")
+
+
+def sdr_mode_blocked_for_source(params: SpectrumParams) -> ModeRestriction | None:
+    """Modo SDR / IQ no disponible en analizadores sweep-only."""
+    if not is_analyzer_only_source(params.source_id):
+        return None
+    return ModeRestriction("monitor_source_warn_sdr_unavailable")
+
+
+def iq_capture_blocked_for_source(params: SpectrumParams) -> ModeRestriction | None:
+    if not is_analyzer_only_source(params.source_id):
+        return None
+    return ModeRestriction("monitor_source_warn_iq_unavailable")
 
 
 def zoom_out_requires_analyzer_mode(

@@ -9,13 +9,15 @@ from core.monitor.display_scale import SPAN_STEPS_HZ, snap_lna_gain_db, snap_vga
 from core.monitor.iq_fft import dc_exclude_hz, find_peak_excluding_dc
 from core.monitor.marker_analysis import estimate_snr_db, interpolate_power_db
 from core.monitor.hackrf_rx_gains import snap_gains
-from core.monitor.analog_demod_profiles import normalize_analog_demod_mode
+from core.monitor.analog_demod_profiles import normalize_analog_demod_mode, snap_vfo_freq_hz
 from core.monitor.receive_mode_logic import (
+    _center_on_freq,
     apply_receive_mode,
     infer_digital_profile_from_freq,
     is_digital_receive_mode,
     refresh_digital_profile_for_vfo,
 )
+from core.monitor.spectrum_params import SpectrumFrame, SpectrumParams
 
 FM_DEMOD_BW_HZ = 200_000.0
 AM_DEMOD_BW_HZ = 1_000.0
@@ -92,15 +94,110 @@ def _select_wfm_rf_gains(
     return choice
 
 
-def _compute_wfm_auto_tune(params: SpectrumParams, frame: SpectrumFrame) -> SdrAutoTuneResult:
-    """AUTO WFM: preset SDR++ (2 MHz, LNA 40, VGA 18, P ON) sin recalcular ganancias."""
-    from core.monitor.wfm_broadcast_profile import apply_sdrpp_wfm_reference
+def freeze_auto_tune_hw_for_live_capture(prev: SpectrumParams, merged: SpectrumParams) -> SpectrumParams:
+    """Mantiene ventana IQ activa — AUTO no debe reiniciar stream con PLAY."""
+    frozen = merged.copy()
+    frozen.center_freq_hz = float(prev.center_freq_hz)
+    frozen.sample_rate_hz = float(prev.sample_rate_hz)
+    frozen.span_hz = float(prev.span_hz)
+    frozen.manual_span_hz = float(prev.manual_span_hz)
+    frozen.span_mode = str(prev.span_mode)
+    frozen.capture_mode = str(prev.capture_mode)
+    frozen.baseband_filter_bw_hz = int(prev.baseband_filter_bw_hz)
+    frozen.baseband_filter_auto = bool(prev.baseband_filter_auto)
+    frozen.apply_span_as_sample_rate()
+    frozen.sync_iq_display()
+    return frozen
 
+
+def merge_auto_tune_params(prev: SpectrumParams, tuned: SpectrumParams) -> SpectrumParams:
+    """Fusiona resultado AUTO sobre el estado actual."""
+    from core.monitor.monitor_flow_log import AUTO_TUNE_APPLY_KEYS
+
+    merged = prev.copy()
+    for key in AUTO_TUNE_APPLY_KEYS:
+        if hasattr(tuned, key):
+            setattr(merged, key, getattr(tuned, key))
+    return merged
+
+
+def apply_wfm_auto_profile(prev: SpectrumParams, *, tune_hz: float) -> SpectrumParams:
+    """Perfil WFM para AUTO — sin forzar RDS ni reiniciar span si ya es adecuado."""
+    from core.monitor.display_scale import snap_iq_sample_rate_hz
+    from core.monitor.hackrf_rx_gains import snap_hackrf_params
+    from core.monitor.monitor_operating_mode import MonitorOperatingMode
+    from core.monitor.wfm_broadcast_profile import (
+        SDRPP_FM_BW_HZ,
+        SDRPP_FM_LNA_DB,
+        SDRPP_FM_SNAP_HZ,
+        SDRPP_FM_VGA_DB,
+    )
+
+    updated = prev.copy()
+    updated.operating_mode = MonitorOperatingMode.SDR.value
+    updated.capture_mode = "iq"
+    updated.audio_enabled = True
+    updated.demod_mode = "wfm"
+    updated.demod_bandwidth_hz = SDRPP_FM_BW_HZ
+    updated.demod_snap_interval = SDRPP_FM_SNAP_HZ
+    updated.demod_deemphasis = "50us"
+    updated.demod_noise_blanker_db = 8.0
+    updated.demod_wfm_lowpass = True
+    updated.demod_iq_correction = False
+    updated.demod_iq_invert = False
+    updated.freq_readout = "f"
+    updated.freq_offset_hz = 0.0
+    updated.lna_gain_db = SDRPP_FM_LNA_DB
+    updated.vga_gain_db = SDRPP_FM_VGA_DB
+    updated.rf_amp_enable = True
+    updated.rf_bias_tee_enable = False
+    updated.ref_scale_auto = True
+
+    snapped = snap_vfo_freq_hz(float(tune_hz), updated.demod_snap_interval)
+    _center_on_freq(updated, snapped)
+    _preserve_iq_window_if_visible(updated, prev, float(tune_hz))
+
+    if float(updated.sample_rate_hz) < MIN_FM_SAMPLE_RATE_HZ - 1.0:
+        updated.span_mode = "manual"
+        updated.manual_span_hz = FM_BROADCAST_SPAN_HZ
+        updated.span_hz = FM_BROADCAST_SPAN_HZ
+        updated.sample_rate_hz = float(snap_iq_sample_rate_hz(FM_BROADCAST_SPAN_HZ))
+        updated.apply_span_as_sample_rate()
+        updated.sync_iq_display()
+        updated.baseband_filter_auto = True
+        updated.sync_baseband_filter_bw()
+
+    return snap_hackrf_params(updated)
+
+
+def _preserve_iq_window_if_visible(
+    updated: SpectrumParams,
+    prev: SpectrumParams,
+    tune_hz: float,
+) -> None:
+    """Evita recentrar o bajar SR si la emisora ya cabe en la ventana IQ activa."""
+    prev_sr = float(prev.sample_rate_hz)
+    if prev_sr >= MIN_FM_SAMPLE_RATE_HZ - 1.0:
+        updated.sample_rate_hz = prev_sr
+        updated.span_hz = float(prev.span_hz)
+        updated.manual_span_hz = float(prev.manual_span_hz)
+        updated.apply_span_as_sample_rate()
+        updated.sync_iq_display()
+    half = float(updated.sample_rate_hz) * 0.5
+    prev_center = float(prev.center_freq_hz)
+    if half > 0.0 and abs(tune_hz - prev_center) <= half * 0.82:
+        updated.center_freq_hz = prev_center
+
+
+def _compute_wfm_auto_tune(params: SpectrumParams, frame: SpectrumFrame) -> SdrAutoTuneResult:
+    """AUTO WFM: ganancias SDR++ + perfil demod sin reiniciar IQ innecesariamente."""
     tune = _tune_hz(params)
     preserved_squelch = float(params.squelch_db)
+    prev = params.copy()
 
-    updated = apply_sdrpp_wfm_reference(params.copy(), tune_hz=tune)
+    updated = apply_wfm_auto_profile(params.copy(), tune_hz=tune)
     updated.squelch_db = preserved_squelch
+    _preserve_iq_window_if_visible(updated, prev, tune)
 
     signal_db, noise_db, snr, _peak_hz = _measure_at_vfo(frame, updated, tune)
     if signal_db is None or noise_db is None:

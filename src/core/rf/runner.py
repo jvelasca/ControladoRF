@@ -76,9 +76,10 @@ class RfSpectrumRunner:
         with self._params_lock:
             self._params = params.copy()
         intent = operator_intent_from_params(params)
-        self._source_id = intent.source_id
-        if self._session.device is None or self._session.device.device_id != intent.source_id:
-            self._session.attach_source(intent.source_id)
+        source_key = params.source_id or "mock"
+        self._source_id = source_key
+        if self._session.attached_source_id != source_key:
+            self._session.attach_source(source_key)
         self._session.set_intent(intent)
 
     def telemetry(self) -> RfTelemetry:

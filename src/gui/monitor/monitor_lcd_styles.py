@@ -1,7 +1,11 @@
 """Estilos LCD para toolbar Monitor (aspecto analizador R&S)."""
 from __future__ import annotations
 
-from PyQt6.QtWidgets import QFrame, QWidget
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QWidget
+
+MONITOR_TOOLBAR_GROUP_HEIGHT = 56
+MONITOR_TOOLBAR_CONTROL_HEIGHT = 46
 
 _LCD_QSS = """
 #MonitorLcdReadout {
@@ -95,7 +99,6 @@ _LCD_QSS = """
     background-color: rgba(22, 28, 36, 0.85);
     border: 1px solid #3a5060;
     border-radius: 6px;
-    padding: 5px 6px;
 }
 #MonitorToolbarFreqGroup {
     background-color: rgba(24, 36, 44, 0.92);
@@ -112,9 +115,8 @@ _LCD_QSS = """
     color: #c8d0d8;
     border: 1px solid #454d58;
     border-radius: 4px;
-    padding: 7px 18px;
-    min-width: 92px;
-    min-height: 28px;
+    padding: 2px 10px;
+    min-width: 68px;
     font-weight: 600;
     font-size: 11px;
 }
@@ -188,6 +190,27 @@ _LCD_QSS = """
 #MonitorPreampBtn:checked:hover {
     background-color: #268034;
 }
+#MonitorSharpTraceBtn {
+    background-color: #2a3038;
+    color: #888;
+    border: 1px solid #454d58;
+    border-radius: 2px;
+    padding: 0 2px;
+    font-weight: 700;
+    font-size: 10px;
+}
+#MonitorSharpTraceBtn:hover {
+    border-color: #0078d4;
+    color: #c8d0d8;
+}
+#MonitorSharpTraceBtn:checked {
+    background-color: #1a4a68;
+    color: #7ec8ff;
+    border-color: #4aa8e8;
+}
+#MonitorSharpTraceBtn:checked:hover {
+    background-color: #286080;
+}
 #MonitorFreqModeBtn {
     background-color: #2a3038;
     border: 1px solid #454d58;
@@ -203,6 +226,26 @@ _LCD_QSS = """
 #MonitorFreqModeBtn[readoutMode="f"] {
     border-color: #a07040;
     background-color: #3a2a18;
+}
+#MonitorChannelModeBtn {
+    background-color: #2a3038;
+    border: 1px solid #454d58;
+    border-radius: 2px;
+    padding: 0;
+    font-size: 9px;
+    font-weight: 600;
+    color: #b8c0c8;
+}
+#MonitorChannelModeBtn:hover {
+    border-color: #0078d4;
+}
+#MonitorChannelModeBtn:checked {
+    background-color: #1f4a30;
+    border-color: #3ecf5a;
+    color: #b8ffd0;
+}
+#MonitorChannelModeBtn:checked:hover {
+    background-color: #286840;
 }
 #MonitorToolbarBwGroup {
     background-color: rgba(28, 38, 52, 0.92);
@@ -282,3 +325,23 @@ def apply_monitor_toolbar_chrome(widget: QWidget) -> None:
     existing = widget.styleSheet() or ""
     if _LCD_QSS not in existing:
         widget.setStyleSheet(existing + _LCD_QSS)
+
+
+def configure_monitor_toolbar_group(frame: QFrame, layout: QHBoxLayout) -> None:
+    """Marco de grupo (FC/SPAN, RF, BW, …) con altura uniforme en la toolbar."""
+    frame.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+    frame.setFixedHeight(MONITOR_TOOLBAR_GROUP_HEIGHT)
+    layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+
+
+def configure_monitor_toolbar_control(control: QWidget) -> None:
+    """Control numérico / LNA / AMPT con altura uniforme dentro del marco."""
+    control.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed)
+    control.setFixedHeight(MONITOR_TOOLBAR_CONTROL_HEIGHT)
+
+
+def configure_monitor_toolbar_mode_button(button: QWidget) -> None:
+    """Botones Analizador / SDR: ocupan el alto útil del marco y reparten ancho."""
+    button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+    button.setFixedHeight(MONITOR_TOOLBAR_CONTROL_HEIGHT)
+    button.setMinimumWidth(68)

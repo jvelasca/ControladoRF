@@ -380,7 +380,7 @@ def _menu_button(parent: QWidget, on_click) -> QToolButton:
     btn = QToolButton(parent)
     btn.setObjectName("MonitorOverlayMenuBtn")
     btn.setText("…")
-    btn.setFixedSize(20, 18)
+    btn.setFixedSize(22, 22)
     btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
     btn.clicked.connect(on_click)
     return btn
@@ -419,7 +419,7 @@ class _MonitorInlineSliderHost(QFrame):
         factory = slider_factory or MonitorLogFreqSlider
         self.slider = factory(self)
         self.slider.setObjectName(slider_name)
-        self.slider.setMinimumHeight(20)
+        self.slider.setMinimumHeight(22)
         layout.addWidget(self.slider, stretch=1)
 
         self._overlay = QLabel(self)
@@ -537,7 +537,7 @@ class MonitorSpectrumSliders(QFrame):
         self._span_menu_host.bind_patch(self._patch)
 
         root = QHBoxLayout(self)
-        root.setContentsMargins(6, 4, 6, 4)
+        root.setContentsMargins(6, 6, 6, 6)
         root.setSpacing(8)
 
         self._freq_host = _MonitorFreqSliderHost(self)
@@ -545,6 +545,19 @@ class MonitorSpectrumSliders(QFrame):
         self._freq_host.slider.setRange(0, 10_000)
         self._freq_host.slider.valueChanged.connect(self._on_freq_slider)
         self._freq_host.slider.sliderPressed.connect(self._release_toolbar_editing)
+        self._ch_slider_prev = QToolButton(self)
+        self._ch_slider_prev.setObjectName("MonitorChannelSliderPrev")
+        self._ch_slider_prev.setText("◀")
+        self._ch_slider_prev.setFixedSize(22, 22)
+        self._ch_slider_prev.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._ch_slider_prev.clicked.connect(lambda: self._step_overlay_frequency(-1))
+        self._ch_slider_next = QToolButton(self)
+        self._ch_slider_next.setObjectName("MonitorChannelSliderNext")
+        self._ch_slider_next.setText("▶")
+        self._ch_slider_next.setFixedSize(22, 22)
+        self._ch_slider_next.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._ch_slider_next.clicked.connect(lambda: self._step_overlay_frequency(1))
+        self._channelization_service = None
         self._freq_menu_btn = _menu_button(self, self._popup_freq_menu)
 
         self._span_host = _MonitorSpanSliderHost(self)
@@ -555,7 +568,9 @@ class MonitorSpectrumSliders(QFrame):
         self._span_host.slider.sliderPressed.connect(self._release_toolbar_editing)
         self._span_menu_btn = _menu_button(self, self._popup_span_menu)
 
+        root.addWidget(self._ch_slider_prev)
         root.addWidget(self._freq_host, stretch=2)
+        root.addWidget(self._ch_slider_next)
         root.addWidget(self._freq_menu_btn)
         root.addWidget(self._span_host, stretch=2)
         root.addWidget(self._span_menu_btn)
@@ -580,6 +595,7 @@ class MonitorSpectrumSliders(QFrame):
         self._span_host.setToolTip(span_tip)
         self._span_host.slider.setToolTip(span_tip)
         self._span_menu_btn.setToolTip(tr("monitor_tip_span_menu"))
+        self._sync_freq_step_buttons()
 
     def bind_toolbar(self, toolbar) -> None:
         self._toolbar = toolbar
@@ -590,6 +606,53 @@ class MonitorSpectrumSliders(QFrame):
     def bind_mode_warning(self, callback) -> None:
         self._mode_warning_callback = callback
         self._span_menu_host.bind_mode_warning(callback)
+
+    def set_channelization_service(self, service) -> None:
+        self._channelization_service = service
+        self._freq_menu_host.set_channelization_service(service)
+        self._sync_freq_step_buttons()
+
+    def _uses_channel_input(self) -> bool:
+        return (
+            self._params.freq_input_mode == "channel"
+            and self._channelization_service is not None
+        )
+
+    def _active_freq_hz(self) -> float:
+        return float(active_marker_freq_hz(self._params))
+
+    def _step_overlay_frequency(self, direction: int) -> None:
+        if direction == 0:
+            return
+        if self._uses_channel_input():
+            from core.rf.channel_input import step_channel_frequency
+
+            hz = step_channel_frequency(
+                self._channelization_service,
+                self._active_freq_hz(),
+                direction,
+            )
+        else:
+            from core.monitor.display_scale import center_freq_step_hz
+
+            step_hz = float(
+                self._params.freq_step_hz
+                or center_freq_step_hz(self._active_freq_hz())
+            )
+            hz = self._active_freq_hz() + float(direction) * step_hz
+        if self._params.freq_readout == "f":
+            updated = patch_selected_freq(self._params, hz, clamp_visible=True)
+        else:
+            updated = patch_center_freq(self._params, hz)
+        self._patch(updated)
+
+    def _sync_freq_step_buttons(self) -> None:
+        if self._uses_channel_input():
+            self._ch_slider_prev.setToolTip(tr("monitor_tip_channel_step_down"))
+            self._ch_slider_next.setToolTip(tr("monitor_tip_channel_step_up"))
+        else:
+            self._ch_slider_prev.setToolTip(tr("monitor_tip_freq_step_down"))
+            self._ch_slider_next.setToolTip(tr("monitor_tip_freq_step_up"))
 
     def _emit_mode_warning(self, restriction: ModeRestriction | None) -> None:
         if restriction is not None and self._mode_warning_callback is not None:
@@ -680,6 +743,7 @@ class MonitorSpectrumSliders(QFrame):
             freq_readout_mode_abbr(params),
             active_marker_freq_hz(params),
         )
+        self._sync_freq_step_buttons()
         self._span_host.set_span_overlay(params)
 
         readout_changed = prev.freq_readout != params.freq_readout

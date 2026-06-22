@@ -36,6 +36,7 @@ class MonitorConfigPanel(QWidget):
 
     source_changed = pyqtSignal(str)
     demod_params_changed = pyqtSignal(object)
+    radio_soft_param_patch = pyqtSignal(object)
     audio_volume_changed = pyqtSignal(float)
     recorder_params_changed = pyqtSignal(object)
     markers_params_changed = pyqtSignal(object)
@@ -52,7 +53,6 @@ class MonitorConfigPanel(QWidget):
     clear_reference_bulk_requested = pyqtSignal(object)
     record_toggled = pyqtSignal(bool)
     auto_tune_requested = pyqtSignal()
-    fm_broadcast_requested = pyqtSignal()
     welle_cli_requested = pyqtSignal()
     mode_restriction = pyqtSignal(object)
 
@@ -285,6 +285,11 @@ class MonitorConfigPanel(QWidget):
         debug_header.addWidget(debug_title)
         debug_header.addWidget(debug_info, alignment=Qt.AlignmentFlag.AlignVCenter)
         debug_header.addStretch(1)
+
+        from gui.developer_feedback_form import DeveloperFeedbackForm
+
+        self._debug_feedback = DeveloperFeedbackForm(content)
+        outer.addWidget(self._debug_feedback)
         outer.addLayout(debug_header)
 
         self._debug_locked_notice = QLabel(tr("monitor_cfg_debug_locked"))
@@ -417,9 +422,9 @@ class MonitorConfigPanel(QWidget):
     def _build_radio_section(self) -> QWidget:
         self._radio_panel = MonitorRadioPanel()
         self._radio_panel.params_changed.connect(self.demod_params_changed.emit)
+        self._radio_panel.soft_param_patch.connect(self.radio_soft_param_patch.emit)
         self._radio_panel.audio_volume_changed.connect(self.audio_volume_changed.emit)
         self._radio_panel.auto_tune_requested.connect(self.auto_tune_requested.emit)
-        self._radio_panel.fm_broadcast_requested.connect(self.fm_broadcast_requested.emit)
         self._radio_panel.welle_cli_requested.connect(self.welle_cli_requested.emit)
         self._radio_panel.mode_restriction.connect(self.mode_restriction.emit)
         self._radio_panel.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
@@ -517,6 +522,9 @@ class MonitorConfigPanel(QWidget):
 
         selected_id = str(previous_id) if previous_id else get_default_source_id(descriptors=self._descriptors)
         idx = combo.findData(selected_id)
+        if idx < 0:
+            fallback_id = get_default_source_id(descriptors=self._descriptors)
+            idx = combo.findData(fallback_id)
         if idx < 0 and combo.count() > 0:
             idx = 0
         if idx >= 0:
@@ -560,20 +568,35 @@ class MonitorConfigPanel(QWidget):
         *,
         prev: SpectrumParams | None = None,
     ) -> None:
-        from core.monitor.monitor_flow_log import DISPLAY_PARAM_KEYS, RADIO_PANEL_KEYS, diff_param_keys
+        from core.monitor.monitor_flow_log import (
+            DISPLAY_PARAM_KEYS,
+            RADIO_PANEL_PATCH_KEYS,
+            changed_param_key_names,
+        )
 
-        if self._radio_panel is not None and (
-            prev is None or diff_param_keys(prev, params, RADIO_PANEL_KEYS)
-        ):
-            self._radio_panel.set_params(params)
+        if self._radio_panel is not None:
+            if prev is None or changed_param_key_names(prev, params, RADIO_PANEL_PATCH_KEYS):
+                self._radio_panel.set_params(params)
+            else:
+                self._radio_panel.sync_bandwidth_ui(params)
         if self._recorder_panel is not None:
             self._recorder_panel.set_params(params)
         if self._markers_panel is not None:
             self._markers_panel.set_params(params)
+        from core.monitor.monitor_flow_log import diff_param_keys
+
         if self._display_panel is not None and (
             prev is None or diff_param_keys(prev, params, DISPLAY_PARAM_KEYS)
         ):
             self._display_panel.set_params(params)
+
+    def sync_radio_params_snapshot(self, params: SpectrumParams) -> None:
+        if self._radio_panel is not None:
+            self._radio_panel.sync_params_snapshot(params)
+
+    def sync_radio_bandwidth_ui(self, params: SpectrumParams) -> None:
+        if self._radio_panel is not None:
+            self._radio_panel.sync_bandwidth_ui(params)
 
     def set_radio_audio_volume(self, volume: float) -> None:
         if self._radio_panel is not None:
@@ -720,6 +743,8 @@ class MonitorConfigPanel(QWidget):
                 self._debug_accordion.setItemText(index, tr(f"monitor_cfg_debug_{key}"))
         if self._debug_lock is not None:
             self._debug_lock.recargar_textos()
+        if getattr(self, "_debug_feedback", None) is not None:
+            self._debug_feedback.recargar_textos()
         if self._debug_locked_notice is not None:
             self._debug_locked_notice.setText(tr("monitor_cfg_debug_locked"))
         if self._setup_widget is not None:

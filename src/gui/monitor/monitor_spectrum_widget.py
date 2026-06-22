@@ -6,8 +6,8 @@ from typing import Optional
 import numpy as np
 import time
 from PyQt6.QtCore import Qt, QPoint, QRect, QTimer, pyqtSignal, pyqtSlot
-from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPolygon, QShowEvent, QWheelEvent
-from PyQt6.QtWidgets import QFrame, QHBoxLayout, QSizePolicy, QWidget
+from PyQt6.QtGui import QColor, QContextMenuEvent, QFont, QPainter, QPainterPath, QPen, QPolygon, QShowEvent, QWheelEvent
+from PyQt6.QtWidgets import QFrame, QHBoxLayout, QMenu, QSizePolicy, QToolButton, QWidget
 
 from core.monitor.amplitude_units import (
     amplitude_axis_label,
@@ -20,6 +20,22 @@ from core.monitor.marker_analysis import estimate_snr_db, interpolate_power_db
 from core.monitor.monitor_freq_span_logic import display_span_hz
 from core.monitor.spectrum_params import SpectrumFrame, SpectrumParams
 from core.monitor.spectrum_plot_mapping import plot_freq_bounds, resample_power_to_grid
+from core.rf.channelization_service import ChannelizationService
+from core.rf.channelization_allocations import AllocationSegment
+from core.rf.spectrum_user_exclusions import (
+    DEFAULT_EXCLUSION_COLOR,
+    SpectrumUserExclusion,
+    exclusion_from_segment,
+)
+from gui.monitor.monitor_channelization_draw import (
+    STRIP_MENU_BTN_WIDTH,
+    allocation_freq_at,
+    allocation_segment_at,
+    allocation_strip_content_rect,
+    draw_allocation_strip,
+    draw_spectrum_exclusion_bands,
+)
+from gui.monitor.monitor_channel_strip_menu import populate_channel_strip_menu
 from gui.monitor.monitor_marker_draw import draw_f_tune_indicator, draw_fc_center_indicator, draw_markers_on_plot
 from gui.monitor.monitor_supervision_draw import (
     draw_supervision_offscreen_indicators,
@@ -36,9 +52,10 @@ from gui.monitor.monitor_spectrum_overlays import MonitorSpectrumSliders, _SLIDE
 from gui.monitor.monitor_spectrum_status_strip import MonitorSpectrumStatusStrip
 from i18n.json_translation import tr
 
-_SLIDER_BAR_HEIGHT = 36
+_SLIDER_BAR_HEIGHT = 44
 _STATUS_STRIP_HEIGHT = 18
 _FREQ_AXIS_HEIGHT = 20
+_ALLOC_STRIP_HEIGHT = 20
 _DOCK_COLLAPSED_WIDTH = DOCK_COLLAPSED_WIDTH
 
 
@@ -62,6 +79,7 @@ class MonitorSpectrumWidget(QWidget):
     marker_drag_active = pyqtSignal(bool)
     dock_settings_changed = pyqtSignal(str, float)
     freq_plot_gutter_changed = pyqtSignal(int)
+    channelization_dialog_requested = pyqtSignal()
 
     def __init__(self, module_id: str, panel_id: str, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -105,6 +123,9 @@ class MonitorSpectrumWidget(QWidget):
         self._drag_start_center_hz = 0.0
         self._drag_plot_start_hz = 0.0
         self._drag_plot_stop_hz = 0.0
+        self._channelization_service: Optional[ChannelizationService] = None
+        self._allocation_segments: list[AllocationSegment] = []
+        self._user_exclusions: list[SpectrumUserExclusion] = []
         self.setMinimumHeight(160)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -119,6 +140,14 @@ class MonitorSpectrumWidget(QWidget):
         self.ampt = self._dock.ampt
         self.vrange = self._dock.vrange
         self.status = MonitorSpectrumStatusStrip(self)
+        self._channel_strip_menu_btn = QToolButton(self)
+        self._channel_strip_menu_btn.setObjectName("MonitorNumericMenuBtn")
+        self._channel_strip_menu_btn.setText("…")
+        self._channel_strip_menu_btn.setFixedSize(STRIP_MENU_BTN_WIDTH, _ALLOC_STRIP_HEIGHT)
+        self._channel_strip_menu_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self._channel_strip_menu_btn.clicked.connect(self._show_channel_strip_menu)
+        self._channel_strip_menu_btn.setToolTip(tr("channel_strip_menu_tip"))
+        self._channel_strip_menu_btn.hide()
         self.sliders.show()
         self._dock.show()
         self.status.show()
@@ -140,7 +169,113 @@ class MonitorSpectrumWidget(QWidget):
         super().showEvent(event)
         self._reposition_overlays()
 
+    def set_channelization_service(
+        self, service: Optional[ChannelizationService]
+    ) -> None:
+        self._channelization_service = service
+        self.sliders.set_channelization_service(service)
+        self._refresh_user_exclusions()
+        self._reposition_overlays()
+        self.update()
+
+    def _channel_strip_active(self) -> bool:
+        return (
+            self._channelization_service is not None
+            and self._params.freq_input_mode == "channel"
+        )
+
+    def _allocation_strip_height(self) -> int:
+        if not self._channel_strip_active():
+            return 0
+        return _ALLOC_STRIP_HEIGHT
+
+    def _refresh_user_exclusions(self) -> None:
+        svc = self._channelization_service
+        self._user_exclusions = svc.list_user_exclusions() if svc is not None else []
+
+    def _allocation_strip_rect(self, plot: QRect) -> QRect:
+        height = self._allocation_strip_height()
+        if height <= 0:
+            return QRect()
+        y = plot.bottom() + _FREQ_AXIS_HEIGHT + 2
+        return QRect(plot.left(), y, plot.width(), height)
+
+    def _allocation_strip_content_rect(self, strip: QRect) -> QRect:
+        return allocation_strip_content_rect(strip, STRIP_MENU_BTN_WIDTH)
+
+    def _refresh_allocation_segments(self, plot_start_hz: float, plot_stop_hz: float) -> None:
+        svc = self._channelization_service
+        if svc is None or not self._channel_strip_active():
+            self._allocation_segments = []
+            return
+        self._allocation_segments = svc.spectrum_allocation_segments(
+            plot_start_hz, plot_stop_hz
+        )
+
+    def _allocation_segment_at(self, point: QPoint) -> AllocationSegment | None:
+        if not self._allocation_segments:
+            return None
+        plot = self._plot_rect()
+        strip = self._allocation_strip_rect(plot)
+        if strip.isNull():
+            return None
+        content = self._allocation_strip_content_rect(strip)
+        plot_start, plot_stop = self._plot_freq_bounds()
+        if point.x() > content.right():
+            return None
+        return allocation_segment_at(
+            point,
+            strip_rect=strip,
+            segments=self._allocation_segments,
+            plot_start_hz=float(plot_start),
+            plot_stop_hz=float(plot_stop),
+        )
+
+    def _allocation_freq_at(self, point: QPoint) -> float | None:
+        if not self._allocation_segments:
+            return None
+        plot = self._plot_rect()
+        strip = self._allocation_strip_rect(plot)
+        if strip.isNull():
+            return None
+        content = self._allocation_strip_content_rect(strip)
+        plot_start, plot_stop = self._plot_freq_bounds()
+        if point.x() > content.right():
+            return None
+        return allocation_freq_at(
+            point,
+            strip_rect=strip,
+            segments=self._allocation_segments,
+            plot_start_hz=float(plot_start),
+            plot_stop_hz=float(plot_stop),
+        )
+
+    def _show_channel_strip_menu(self) -> None:
+        menu = QMenu(self)
+        populate_channel_strip_menu(
+            menu,
+            service=self._channelization_service,
+            exclusions=self._user_exclusions,
+            on_open_dialog=self.channelization_dialog_requested.emit,
+            on_clear_exclusions=self._clear_all_user_exclusions,
+            parent=self,
+        )
+        menu.exec(
+            self._channel_strip_menu_btn.mapToGlobal(
+                self._channel_strip_menu_btn.rect().bottomLeft()
+            )
+        )
+
+    def _clear_all_user_exclusions(self) -> None:
+        svc = self._channelization_service
+        if svc is None or not self._user_exclusions:
+            return
+        svc.clear_user_exclusions()
+        self._refresh_user_exclusions()
+        self.update()
+
     def set_analyzer_params(self, params: SpectrumParams) -> None:
+        prev_channel_mode = self._params.freq_input_mode
         if self._marker_drag_active:
             preserved_markers = [marker.copy() for marker in self._params.markers]
             preserved_selected = float(self._params.selected_freq_hz)
@@ -158,6 +293,8 @@ class MonitorSpectrumWidget(QWidget):
         self.sliders.set_params(self._params)
         self._dock.set_params(self._params)
         self.status.set_params(self._params)
+        if prev_channel_mode != self._params.freq_input_mode:
+            self._reposition_overlays()
         if not self._marker_drag_active:
             self.update()
 
@@ -188,7 +325,25 @@ class MonitorSpectrumWidget(QWidget):
         self.status.move(plot.left(), self.height() - _STATUS_STRIP_HEIGHT)
         self.status.raise_()
 
+        if self._channel_strip_active():
+            strip = self._allocation_strip_rect(plot)
+            btn_h = max(1, strip.height())
+            self._channel_strip_menu_btn.setFixedSize(STRIP_MENU_BTN_WIDTH, btn_h)
+            self._channel_strip_menu_btn.move(
+                strip.right() - STRIP_MENU_BTN_WIDTH + 1,
+                strip.top(),
+            )
+            self._channel_strip_menu_btn.show()
+            self._channel_strip_menu_btn.raise_()
+        else:
+            self._channel_strip_menu_btn.hide()
+
     def _overlay_hit(self, point) -> bool:
+        if (
+            self._channel_strip_menu_btn.isVisible()
+            and self._channel_strip_menu_btn.geometry().contains(point)
+        ):
+            return True
         return (
             self.sliders.geometry().contains(point)
             or self._dock.geometry().contains(point)
@@ -276,6 +431,7 @@ class MonitorSpectrumWidget(QWidget):
         self.sliders.recargar_textos()
         self._dock.recargar_textos()
         self.status.recargar_textos()
+        self._channel_strip_menu_btn.setToolTip(tr("channel_strip_menu_tip"))
         self.update()
 
     def apply_visual_theme(self, _style_key: str) -> None:
@@ -471,6 +627,8 @@ class MonitorSpectrumWidget(QWidget):
             if factor > 0.05:
                 anchor = self._freq_at_plot_x(event.position().x()) or self._params.center_freq_hz
                 self.span_zoom_requested.emit(float(factor), float(anchor))
+        elif self._allocation_freq_at(point) is not None and self._plot_drag is None:
+            self.setCursor(Qt.CursorShape.PointingHandCursor)
         elif self._plot_rect().contains(point):
             if self._is_fc_readout():
                 self.setCursor(
@@ -545,6 +703,11 @@ class MonitorSpectrumWidget(QWidget):
         if self._overlay_hit(event.position().toPoint()):
             super().mousePressEvent(event)
             return
+        if event.button() == Qt.MouseButton.LeftButton:
+            alloc_freq = self._allocation_freq_at(event.position().toPoint())
+            if alloc_freq is not None:
+                self.frequency_clicked.emit(alloc_freq)
+                return
         if (
             event.button() == Qt.MouseButton.LeftButton
             and self._freqs is not None
@@ -569,7 +732,131 @@ class MonitorSpectrumWidget(QWidget):
                     self._drag_plot_stop_hz = float(pstop)
         super().mousePressEvent(event)
 
+    def contextMenuEvent(self, event: QContextMenuEvent) -> None:
+        segment = self._allocation_segment_at(event.pos())
+        if segment is not None:
+            self._show_allocation_context_menu(event.globalPos(), segment)
+            event.accept()
+            return
+        super().contextMenuEvent(event)
+
+    def _show_allocation_context_menu(
+        self, global_pos, segment: AllocationSegment
+    ) -> None:
+        svc = self._channelization_service
+        if svc is None:
+            return
+        ex_id = f"{segment.standard_id}:{segment.label}"
+        existing = svc.find_user_exclusion(ex_id)
+        menu = QMenu(self)
+        tune = menu.addAction(tr("channelization_alloc_tune"))
+        tune.triggered.connect(
+            lambda: self.frequency_clicked.emit(float(segment.center_freq_hz))
+        )
+        menu.addSeparator()
+        if existing is None:
+            add_ex = menu.addAction(tr("channelization_alloc_add_exclusion"))
+            add_ex.triggered.connect(
+                lambda: self._add_exclusion_for_segment(segment, DEFAULT_EXCLUSION_COLOR)
+            )
+            pick = menu.addAction(tr("channelization_alloc_add_exclusion_color"))
+            pick.triggered.connect(lambda: self._pick_exclusion_color(segment, existing=None))
+        else:
+            recolor = menu.addAction(tr("channelization_alloc_change_exclusion_color"))
+            recolor.triggered.connect(
+                lambda: self._pick_exclusion_color(segment, existing=existing)
+            )
+            remove = menu.addAction(tr("channelization_alloc_remove_exclusion"))
+            remove.triggered.connect(lambda: self._remove_exclusion(ex_id))
+        menu.addSeparator()
+        info = menu.addAction(tr("channelization_alloc_show_info"))
+        info.triggered.connect(lambda: self._show_segment_info(segment))
+        menu.exec(global_pos)
+
+    def _add_exclusion_for_segment(
+        self, segment: AllocationSegment, color_hex: str
+    ) -> None:
+        svc = self._channelization_service
+        if svc is None:
+            return
+        svc.upsert_user_exclusion(exclusion_from_segment(segment, color_hex=color_hex))
+        self._refresh_user_exclusions()
+        self.update()
+
+    def _pick_exclusion_color(
+        self, segment: AllocationSegment, *, existing: SpectrumUserExclusion | None
+    ) -> None:
+        from PyQt6.QtWidgets import QColorDialog
+
+        initial = QColor(existing.color_hex if existing else DEFAULT_EXCLUSION_COLOR)
+        color = QColorDialog.getColor(
+            initial,
+            self.window(),
+            tr("channelization_alloc_pick_color_title"),
+        )
+        if not color.isValid():
+            return
+        alpha = initial.alpha() if initial.isValid() else 136
+        color.setAlpha(alpha)
+        self._add_exclusion_for_segment(segment, color.name(QColor.NameFormat.HexArgb))
+
+    def _remove_exclusion(self, exclusion_id: str) -> None:
+        svc = self._channelization_service
+        if svc is None:
+            return
+        svc.remove_user_exclusion(exclusion_id)
+        self._refresh_user_exclusions()
+        self.update()
+
+    def _show_segment_info(self, segment: AllocationSegment) -> None:
+        from PyQt6.QtWidgets import QMessageBox
+
+        svc = self._channelization_service
+        if svc is None:
+            return
+        std = svc.get_standard(segment.standard_id)
+        lines = [
+            f"{tr('channelization_col_label')}: {segment.label}",
+            f"{tr('channelization_col_center_mhz')}: {segment.center_freq_hz / 1e6:.4f}",
+            f"{tr('channelization_col_bw_mhz')}: {(segment.freq_max_hz - segment.freq_min_hz) / 1e6:.4f}",
+        ]
+        if std is not None:
+            lines.append(f"{tr('channelization_col_name')}: {std.name}")
+            lines.append(f"{tr('channelization_col_id')}: {std.id}")
+        restrictions = svc.list_restrictions(segment.standard_id)
+        for rule in restrictions:
+            if rule.freq_max_hz < segment.freq_min_hz or rule.freq_min_hz > segment.freq_max_hz:
+                continue
+            msg = tr(rule.message_key) if rule.message_key else rule.label
+            lines.append(f"• {msg}")
+        QMessageBox.information(
+            self.window(),
+            tr("channelization_alloc_info_title"),
+            "\n".join(lines),
+        )
+
     def keyPressEvent(self, event) -> None:
+        if event.key() in (Qt.Key.Key_Left, Qt.Key.Key_Right):
+            direction = -1 if event.key() == Qt.Key.Key_Left else 1
+            if (
+                self._params.freq_input_mode == "channel"
+                and self._channelization_service is not None
+            ):
+                from core.rf.channel_input import step_channel_frequency
+
+                base_hz = (
+                    float(self._params.selected_freq_hz)
+                    if self._params.freq_readout == "f"
+                    else float(self._params.center_freq_hz)
+                )
+                freq = step_channel_frequency(
+                    self._channelization_service, base_hz, direction
+                )
+                if self._params.freq_readout == "f":
+                    self._preview_marker_drag(freq)
+                self.frequency_clicked.emit(freq)
+                event.accept()
+                return
         if self._params.freq_readout == "f":
             from core.monitor.monitor_freq_span_logic import nudge_selected_freq_hz, nudge_step_hz
 
@@ -596,7 +883,9 @@ class MonitorSpectrumWidget(QWidget):
             left: int = FREQ_PLOT_LEFT_MARGIN
             right: int = 0
             top: int = _SLIDER_BAR_HEIGHT + 6
-            bottom: int = _FREQ_AXIS_HEIGHT + _STATUS_STRIP_HEIGHT + 4
+            bottom: int = (
+                _FREQ_AXIS_HEIGHT + _STATUS_STRIP_HEIGHT + 4 + self._allocation_strip_height()
+            )
 
         return M()
 
@@ -817,6 +1106,14 @@ class MonitorSpectrumWidget(QWidget):
 
         plot_start, plot_stop = self._plot_freq_bounds()
         plot_span = plot_stop - plot_start
+        self._refresh_allocation_segments(float(plot_start), float(plot_stop))
+        draw_spectrum_exclusion_bands(
+            painter,
+            plot,
+            self._user_exclusions,
+            plot_start_hz=float(plot_start),
+            plot_stop_hz=float(plot_stop),
+        )
         for i in range(9):
             x = plot.left() + int(i / 8 * plot.width())
             painter.setPen(QPen(grid, 1))
@@ -825,9 +1122,11 @@ class MonitorSpectrumWidget(QWidget):
             painter.setPen(text)
             painter.drawText(x - 28, plot.bottom() + 18, _format_freq_hz(freq))
 
-        painter.setPen(QPen(trace, 1.5))
+        painter.setPen(QPen(trace, 1.0 if self._params.iq_trace_sharp else 1.5))
         trace_start, trace_stop, trace_freqs, trace_power_raw = self._trace_arrays()
         if trace_freqs.size >= 2 and trace_power_raw.size >= 2:
+            from core.monitor.monitor_bw_profile import plot_resample_method
+
             offset = self._params.ref_offset_db
             n_cols = max(2, plot.width())
             trace_power = resample_power_to_grid(
@@ -836,7 +1135,20 @@ class MonitorSpectrumWidget(QWidget):
                 start_hz=trace_start,
                 stop_hz=trace_stop,
                 num_columns=n_cols,
+                method=plot_resample_method(self._params),
             )
+            if self._params.display_trace_fill and trace_power.size >= 2:
+                fill_color = spectrum_trace_fill_color(self._params, alpha=72)
+                fill_path = QPainterPath()
+                fill_path.moveTo(plot.left(), plot.bottom())
+                for i in range(n_cols):
+                    x = plot.left() + i
+                    level = dbm_to_display(float(trace_power[i]), unit, ref_offset_db=offset)
+                    y = self._level_to_y(level, plot, top_disp, bottom_disp)
+                    fill_path.lineTo(x, y)
+                fill_path.lineTo(plot.left() + n_cols - 1, plot.bottom())
+                fill_path.closeSubpath()
+                painter.fillPath(fill_path, fill_color)
             for i in range(n_cols - 1):
                 x1 = plot.left() + i
                 x2 = plot.left() + i + 1
@@ -869,6 +1181,16 @@ class MonitorSpectrumWidget(QWidget):
         self._draw_freq_window_edges(painter, plot)
         self._draw_recording_banner(painter, plot)
         self._draw_alert_banner(painter, plot)
+        alloc_rect = self._allocation_strip_rect(plot)
+        if not alloc_rect.isNull():
+            draw_allocation_strip(
+                painter,
+                alloc_rect,
+                self._allocation_segments,
+                plot_start_hz=float(plot_start),
+                plot_stop_hz=float(plot_stop),
+                menu_btn_width=STRIP_MENU_BTN_WIDTH,
+            )
 
         painter.end()
 
@@ -927,15 +1249,9 @@ class MonitorSpectrumWidget(QWidget):
         )
 
     def _demod_tune_hz(self) -> float:
-        """Centro del sombreado demod: FC → centro; F → frecuencia seleccionada."""
-        params = self._params
-        if params.freq_readout == "f" and params.selected_freq_hz > 0:
-            return float(params.selected_freq_hz)
-        if params.freq_readout == "fc":
-            return float(params.center_freq_hz)
-        if params.vfo_freq_hz > 0:
-            return float(params.vfo_freq_hz)
-        return float(params.center_freq_hz)
+        from core.monitor.demod_dsp import demod_tune_freq_hz
+
+        return demod_tune_freq_hz(self._params)
 
     def _draw_demod_bandwidth_shade(self, painter: QPainter, plot) -> None:
         params = self._params

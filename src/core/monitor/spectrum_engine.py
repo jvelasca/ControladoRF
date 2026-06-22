@@ -73,6 +73,7 @@ class SpectrumEngine:
         self._reconfiguring = False
         self._demod_auxiliary = False
         self._aux_source: SpectrumSource | None = None
+        self._demod_get_params: Callable[[], SpectrumParams] | None = None
 
     @property
     def last_exit_message(self) -> str:
@@ -130,10 +131,13 @@ class SpectrumEngine:
 
     def set_source(self, source_id: str) -> tuple[bool, str]:
         """Selecciona fuente sin abrir hardware (no bloqueante)."""
-        base_id = source_id.split("_")[0] if source_id.startswith("hackrf") else source_id
+        from core.rf.source_ids import parse_source_id
+
+        parsed = parse_source_id(source_id)
+        stored = parsed.raw
         with self._params_lock:
-            if self._params.source_id == base_id:
-                return True, idle_message_for_source(base_id)
+            if self._params.source_id == stored:
+                return True, idle_message_for_source(stored)
         if self._connecting:
             return True, idle_message_for_source(self.params.source_id)
         was_running = self._running or self._connecting
@@ -143,10 +147,12 @@ class SpectrumEngine:
             self._source.close()
         except Exception:
             pass
-        self._source = create_spectrum_source(base_id)
+        from core.monitor.sdr_setup import map_source_id_to_device_id
+
+        self._source = create_spectrum_source(map_source_id_to_device_id(stored))
         with self._params_lock:
-            self._params.source_id = base_id
-        return True, idle_message_for_source(base_id)
+            self._params.source_id = stored
+        return True, idle_message_for_source(stored)
 
     def start(self) -> tuple[bool, str]:
         if self._running:
@@ -160,11 +166,28 @@ class SpectrumEngine:
         self._thread.start()
         return True, "Conectando…"
 
-    def start_demod_auxiliary(self, iq_source: SpectrumSource) -> None:
+    def start_demod_auxiliary(
+        self,
+        iq_source: SpectrumSource,
+        *,
+        get_params: Callable[[], SpectrumParams] | None = None,
+    ) -> None:
         """Demod/audio/digital sobre IQ ya abierto por motor RF v2 (sin segundo stream)."""
-        if self._running or self._connecting or self._demod_auxiliary:
+        if self._demod_auxiliary:
+            self._stop_demod_worker()
+            self._stop_digital_worker()
+            self._demod.reset()
+            self._digital.reset()
+            if self._aux_source is not None:
+                self._source = self._aux_source
+                self._aux_source = None
+            self._demod_auxiliary = False
+            self._demod_get_params = None
+            self._running = False
+        if self._running or self._connecting:
             return
         self._demod_auxiliary = True
+        self._demod_get_params = get_params
         self._aux_source = self._source
         self._source = iq_source
         self._stop.clear()
@@ -189,6 +212,7 @@ class SpectrumEngine:
                 self._source = self._aux_source
                 self._aux_source = None
             self._demod_auxiliary = False
+            self._demod_get_params = None
             self._running = False
             self._connecting = False
             with self._params_lock:
@@ -256,10 +280,11 @@ class SpectrumEngine:
 
     def _start_demod_worker(self) -> None:
         self._stop_demod_worker()
+        get_params = self._demod_get_params or (lambda: self.params)
         self._demod_worker = DemodStreamWorker(
             source=self._source,
             demod=self._demod,
-            get_params=lambda: self.params,
+            get_params=get_params,
             on_pcm=self._on_demod_pcm,
             on_ui=self._on_demod_ui,
             on_iq=self._on_recording_iq,

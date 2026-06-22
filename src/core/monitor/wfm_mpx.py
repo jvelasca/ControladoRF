@@ -247,6 +247,18 @@ def decode_wfm_audio(
         return mono, mono.copy()
 
     _track_pilot_pll(x, sample_rate_hz=sample_rate_hz, state=state)
+    pilot_mag = math.hypot(float(state.pilot_i), float(state.pilot_q))
+    mpx_rms = float(np.sqrt(np.mean(np.square(x)) + 1e-18))
+    if pilot_mag < max(1e-6, mpx_rms * 0.02):
+        mono, state.deemph_l = _apply_deemphasis(
+            l_plus_r,
+            deemphasis=deemphasis,
+            sample_rate_hz=sample_rate_hz,
+            y0=state.deemph_l,
+        )
+        state.mpx_phase += x.size
+        return mono, mono.copy()
+
     n = x.size
     idx = state.mpx_phase + np.arange(n, dtype=np.float64)
     t = idx / float(sample_rate_hz)

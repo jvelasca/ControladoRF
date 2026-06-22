@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -13,6 +14,7 @@ from core.monitor.wfm_mpx import MPX_RATE_HZ, WfmMpxState, decode_wfm_audio, res
 from core.monitor.wfm_rds import RdsDecoderState, feed_rds_mpx
 
 AUDIO_RATE_HZ = 48_000.0
+RDS_FEED_MIN_INTERVAL_SEC = 0.05
 SCOPE_SAMPLES = 2048
 VU_ATTACK = 0.35
 VU_RELEASE = 0.08
@@ -56,9 +58,11 @@ class DemodStreamState:
     vu_peak: float = -120.0
     squelch_open: bool = False
     squelch_noise_floor_dbfs: float = -120.0
+    last_squelch_threshold_db: float = -120.0
     scope_buffer: np.ndarray | None = None
     wfm_mpx: WfmMpxState = field(default_factory=WfmMpxState)
     rds: RdsDecoderState = field(default_factory=RdsDecoderState)
+    rds_last_feed_mono: float = 0.0
 
     def __post_init__(self) -> None:
         if self.scope_buffer is None:
@@ -259,11 +263,23 @@ def _deemphasis_cutoff_hz(tau_sec: float) -> float:
     return 1.0 / (2.0 * math.pi * max(tau_sec, 1e-9))
 
 
+def demod_tune_freq_hz(params: SpectrumParams) -> float:
+    """Frecuencia de demodulación efectiva (VFO / marcador F / centro)."""
+    if str(getattr(params, "freq_readout", "fc") or "fc").lower() == "f":
+        selected = float(getattr(params, "selected_freq_hz", 0.0) or 0.0)
+        if selected > 0.0:
+            return selected
+    vfo = float(getattr(params, "vfo_freq_hz", 0.0) or 0.0)
+    if vfo > 0.0:
+        return vfo
+    return float(params.center_freq_hz)
+
+
 def _fm_max_deviation_hz(mode: str, demod_bw: float) -> float:
     if mode == "nfm":
         return max(2_500.0, min(float(demod_bw) * 0.6, 25_000.0))
     if mode == "wfm":
-        return max(15_000.0, min(float(demod_bw) * 0.75, WFM_MAX_DEVIATION_HZ))
+        return WFM_MAX_DEVIATION_HZ
     return WFM_MAX_DEVIATION_HZ
 
 
@@ -403,51 +419,61 @@ def _update_vu(state: DemodStreamState, pcm: np.ndarray) -> tuple[float, float]:
     return state.vu_level, state.vu_peak
 
 
-def _squelch_open_level_db(threshold_db: float, noise_floor_dbfs: float) -> float:
-    rel_db = float(noise_floor_dbfs) + SQUELCH_MIN_SNR_DB
-    return max(float(threshold_db), rel_db)
+
+def squelch_passes_audio(
+    *,
+    squelch_enabled: bool,
+    squelch_db: float,
+    squelch_open: bool,
+) -> bool:
+    """True = audio audible (squelch desactivado o por encima del umbral)."""
+    if not squelch_enabled or float(squelch_db) <= SQUELCH_OFF_THRESHOLD_DB:
+        return True
+    return bool(squelch_open)
 
 
-def _can_open_squelch(level_dbfs: float, threshold_db: float, noise_floor_dbfs: float) -> bool:
-    level = float(level_dbfs)
-    return level >= _squelch_open_level_db(threshold_db, noise_floor_dbfs)
-
-
-def _update_squelch(state: DemodStreamState, level_dbfs: float, threshold_db: float) -> bool:
-    """Squelch dBFS con histéresis y piso de ruido adaptativo (estilo SDR++/GQRX)."""
+def _update_squelch(
+    state: DemodStreamState,
+    level_dbfs: float,
+    threshold_db: float,
+    *,
+    enabled: bool = True,
+) -> bool:
+    """Squelch dBFS: umbral directo con histéresis (ajuste suave en sintonía)."""
     level = float(level_dbfs)
     threshold = float(threshold_db)
-    if threshold <= SQUELCH_OFF_THRESHOLD_DB:
+    if not enabled or threshold <= SQUELCH_OFF_THRESHOLD_DB:
         state.squelch_open = True
         state.squelch_noise_floor_dbfs = -120.0
+        state.last_squelch_threshold_db = threshold
         return True
 
-    nf = float(state.squelch_noise_floor_dbfs)
-    if nf <= -119.0:
-        margin = level - threshold
-        if level <= threshold:
-            state.squelch_noise_floor_dbfs = level
-        elif margin >= 30.0 or level >= -35.0 or threshold > level - 15.0:
-            state.squelch_noise_floor_dbfs = threshold - 15.0
-        else:
-            state.squelch_noise_floor_dbfs = level
-        nf = state.squelch_noise_floor_dbfs
-    elif not state.squelch_open:
-        quiet = level <= nf + SQUELCH_MIN_SNR_DB
-        if quiet:
+    if threshold != state.last_squelch_threshold_db:
+        state.last_squelch_threshold_db = threshold
+        state.squelch_noise_floor_dbfs = -120.0
+        state.squelch_open = level >= threshold
+        return state.squelch_open
+
+    open_db = threshold
+    close_db = threshold - SQUELCH_HYSTERESIS_DB
+
+    if not state.squelch_open:
+        nf = float(state.squelch_noise_floor_dbfs)
+        if nf <= -119.0:
+            state.squelch_noise_floor_dbfs = min(level, threshold - 3.0)
+        elif level <= nf + SQUELCH_MIN_SNR_DB:
             nf = nf + SQUELCH_NOISE_ATTACK * (level - nf)
             if level < nf:
                 nf = level
-    elif state.squelch_open:
-        nf = nf + SQUELCH_NOISE_RELEASE * (level - nf - SQUELCH_MIN_SNR_DB)
-    state.squelch_noise_floor_dbfs = max(-120.0, nf)
+            state.squelch_noise_floor_dbfs = max(-120.0, nf)
+    elif state.squelch_open and state.squelch_noise_floor_dbfs > threshold - 3.0:
+        nf = float(state.squelch_noise_floor_dbfs)
+        state.squelch_noise_floor_dbfs = nf + 0.35 * ((threshold - 3.0) - nf)
 
-    open_db = _squelch_open_level_db(threshold, state.squelch_noise_floor_dbfs)
-    close_db = open_db - SQUELCH_HYSTERESIS_DB
     if state.squelch_open:
         if level < close_db:
             state.squelch_open = False
-    elif _can_open_squelch(level, threshold, state.squelch_noise_floor_dbfs):
+    elif level >= open_db:
         state.squelch_open = True
     return state.squelch_open
 
@@ -505,7 +531,7 @@ def demod_iq_to_audio(
         x = np.conjugate(x)
     if bool(getattr(params, "demod_iq_correction", False)):
         x = _apply_iq_correction(x)
-    offset_hz = float(params.vfo_freq_hz) - float(params.center_freq_hz)
+    offset_hz = demod_tune_freq_hz(params) - float(params.center_freq_hz)
     if abs(offset_hz) >= 0.5:
         n = int(x.size)
         idx = state.mix_sample_index + np.arange(n, dtype=np.float64)
@@ -613,7 +639,12 @@ def demod_iq_to_audio(
             rds_pty = ""
             rds_music = ""
             if bool(getattr(params, "demod_wfm_rds", False)):
-                rds_text = feed_rds_mpx(mpx, sample_rate_hz=MPX_RATE_HZ, state=state.rds)
+                now = time.monotonic()
+                if now - float(state.rds_last_feed_mono) >= RDS_FEED_MIN_INTERVAL_SEC:
+                    state.rds_last_feed_mono = now
+                    rds_text = feed_rds_mpx(mpx, sample_rate_hz=MPX_RATE_HZ, state=state.rds)
+                else:
+                    rds_text = state.rds.status
                 rds_pi = state.rds.pi_hex
                 rds_ps = (state.rds.ps_name or "").strip()
                 rds_country = state.rds.country_code
@@ -650,7 +681,12 @@ def demod_iq_to_audio(
             level_dbfs = 20.0 * math.log10(rms + 1e-9)
             peak_dbfs = 20.0 * math.log10(float(np.max(np.abs(meter))) + 1e-9)
             vu_dbfs, _vu_peak = _update_vu(state, meter.astype(np.float32))
-            squelch_open = _update_squelch(state, level_dbfs, float(params.squelch_db))
+            squelch_open = _update_squelch(
+                state,
+                level_dbfs,
+                float(params.squelch_db),
+                enabled=bool(params.squelch_enabled),
+            )
             left_pcm = _apply_squelch_mute(left_pcm, open_=squelch_open)
             right_pcm = _apply_squelch_mute(right_pcm, open_=squelch_open)
             if stereo_on:
@@ -704,7 +740,12 @@ def demod_iq_to_audio(
         peak_dbfs = 20.0 * math.log10(float(np.max(np.abs(meter))) + 1e-9)
         vu_dbfs, _vu_peak = _update_vu(state, meter.astype(np.float32))
     _push_scope(state, pcm)
-    squelch_open = _update_squelch(state, level_dbfs, float(params.squelch_db))
+    squelch_open = _update_squelch(
+        state,
+        level_dbfs,
+        float(params.squelch_db),
+        enabled=bool(params.squelch_enabled),
+    )
     pcm = _apply_squelch_mute(pcm, open_=squelch_open)
 
     scope = state.scope_buffer if state.scope_buffer is not None else empty_scope

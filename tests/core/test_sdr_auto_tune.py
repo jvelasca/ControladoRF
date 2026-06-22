@@ -45,7 +45,8 @@ def test_auto_tune_wfm_uses_broadcast_span_and_bw() -> None:
     assert result.ok
     p = result.params
     assert p.capture_mode == "iq"
-    assert p.sample_rate_hz == 2_000_000.0
+    assert p.sample_rate_hz == 4_000_000.0
+    assert p.center_freq_hz == 92_000_000.0
     assert p.demod_bandwidth_hz == 200_000.0
     assert p.lna_gain_db == 40
     assert p.vga_gain_db == 18

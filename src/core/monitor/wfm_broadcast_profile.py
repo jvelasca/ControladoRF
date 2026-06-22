@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from core.monitor.analog_demod_profiles import apply_analog_demod_defaults, snap_vfo_freq_hz
+from core.monitor.receive_mode_logic import _center_on_freq
 from core.monitor.display_scale import snap_iq_sample_rate_hz
 from core.monitor.hackrf_rx_gains import snap_hackrf_params
 from core.monitor.monitor_operating_mode import MonitorOperatingMode
@@ -66,9 +67,7 @@ def apply_sdrpp_wfm_reference(
     if hz <= 0.0:
         hz = SDRPP_FM_REFERENCE_HZ
     snapped = snap_vfo_freq_hz(hz, updated.demod_snap_interval)
-    updated.vfo_freq_hz = snapped
-    updated.selected_freq_hz = snapped
-    updated.center_freq_hz = snapped
+    _center_on_freq(updated, snapped)
     return snap_hackrf_params(updated)
 
 

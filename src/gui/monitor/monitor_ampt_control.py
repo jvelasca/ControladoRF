@@ -123,24 +123,53 @@ class MonitorAmptControl(MonitorNumericControl):
         )
         self._params = SpectrumParams()
         self._patch_callback: Optional[Callable[[SpectrumParams], None]] = None
+        self._live_ref_dbm: float | None = None
+        self._live_ref_range_db: float | None = None
         self._apply_tooltips()
 
     def bind_patch(self, callback: Callable[[SpectrumParams], None]) -> None:
         self._patch_callback = callback
 
+    def set_live_scale(self, ref_level_dbm: float, ref_range_db: float) -> None:
+        """Actualiza lectura AUTO con el valor efectivo del último frame."""
+        self._live_ref_dbm = float(ref_level_dbm)
+        self._live_ref_range_db = float(ref_range_db)
+        if self._params.ref_scale_auto and not self.is_user_editing():
+            self._refresh_auto_readout()
+
+    def _effective_ref_dbm(self) -> float:
+        if self._live_ref_dbm is not None:
+            return float(self._live_ref_dbm)
+        return float(self._params.ref_level_dbm)
+
+    def _refresh_auto_readout(self) -> None:
+        unit = self._params.amplitude_unit
+        display = dbm_to_display(
+            self._effective_ref_dbm(),
+            unit,
+            ref_offset_db=self._params.ref_offset_db,
+        )
+        self.set_read_only(True)
+        self._spin.setDecimals(1 if unit == "dBm" else 2)
+        self._spin.setPrefix("")
+        self._spin.setSpecialValueText("")
+        self._spin.setSuffix(
+            f" {amplitude_axis_label(unit)} {tr('monitor_lcd_auto_suffix')}"
+        )
+        self.set_value(display, force=True)
+        self.set_value_mode("auto")
+
     def set_params(self, params: SpectrumParams) -> None:
         self._params = params.copy()
         unit = params.amplitude_unit
-        suffix = f" {amplitude_axis_label(unit)}"
-        self._spin.setSuffix(suffix)
         if params.ref_scale_auto:
-            self.set_read_only(True)
-            editor = self._spin.lineEdit()
-            if editor is not None:
-                editor.setText(tr("monitor_ampt_auto"))
-            self.set_value_mode("auto")
+            self._refresh_auto_readout()
         else:
+            self._live_ref_dbm = None
+            self._live_ref_range_db = None
             self.set_read_only(False)
+            self._spin.setSpecialValueText("")
+            self._spin.setSuffix(f" {amplitude_axis_label(unit)}")
             display = dbm_to_display(
                 params.ref_level_dbm, unit, ref_offset_db=params.ref_offset_db
             )

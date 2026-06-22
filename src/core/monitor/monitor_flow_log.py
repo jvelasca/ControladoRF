@@ -34,6 +34,76 @@ RF_GAIN_PARAM_KEYS = frozenset(
     }
 )
 
+# Campos que los controles de la toolbar pueden parchear (merge parcial al aplicar).
+TOOLBAR_PARAM_KEYS = RF_GAIN_PARAM_KEYS | frozenset(
+    {
+        "center_freq_hz",
+        "selected_freq_hz",
+        "span_hz",
+        "manual_span_hz",
+        "last_span_hz",
+        "span_mode",
+        "max_span_hz",
+        "freq_readout",
+        "freq_input_mode",
+        "freq_step_hz",
+        "freq_offset_hz",
+        "freq_pan_mode",
+        "marker_start_hz",
+        "marker_stop_hz",
+        "ref_level_dbm",
+        "ref_range_db",
+        "ref_scale_auto",
+        "ref_offset_db",
+        "amplitude_unit",
+        "ampt_mode",
+        "rf_attenuation_db",
+        "fft_size",
+        "fft_auto",
+        "rbw_hz",
+        "rbw_auto",
+        "trace_smooth_auto",
+        "trace_smooth_bins",
+        "sweep_time_ms",
+        "sweep_auto",
+        "sweep_trigger_mode",
+        "sweep_trigger_period_sec",
+        "detector",
+        "trace_mode",
+        "iq_trace_sharp",
+        "capture_mode",
+        "sample_rate_hz",
+    }
+)
+
+# Campos RADIO seguros para persistencia inmediata (no modo/captura/vivo).
+PERSIST_RADIO_UI_KEYS = frozenset(
+    {
+        "demod_mode",
+        "demod_bandwidth_hz",
+        "demod_snap_interval",
+        "demod_deemphasis",
+        "demod_noise_blanker_db",
+        "demod_wfm_stereo",
+        "demod_wfm_rds",
+        "demod_wfm_lowpass",
+        "demod_iq_correction",
+        "demod_iq_invert",
+        "demod_agc_attack",
+        "demod_agc_decay",
+        "squelch_db",
+        "squelch_enabled",
+        "squelch_rf_level_dbm",
+        "show_demod_bandwidth",
+        "audio_volume",
+        "audio_muted",
+        "digital_analysis_enabled",
+        "digital_profile",
+        "digital_symbol_rate_hz",
+        "digital_mod_order",
+    }
+)
+
 # Cambios de análisis/visualización — no reinician stream IQ ni hackrf_transfer.
 DISPLAY_PARAM_KEYS = frozenset(
     {
@@ -58,11 +128,13 @@ DISPLAY_PARAM_KEYS = frozenset(
         "sweep_auto",
         "detector",
         "trace_mode",
+        "iq_trace_sharp",
         "display_span_viewport_color",
         "display_span_viewport_hi_color",
         "display_span_track_color",
         "display_span_handle_color",
         "display_trace_color",
+        "display_trace_fill",
         "display_sdr_span_viewport_color",
         "display_sdr_span_viewport_hi_color",
         "display_sdr_span_track_color",
@@ -90,6 +162,7 @@ RADIO_PANEL_KEYS = frozenset(
         "demod_agc_attack",
         "demod_agc_decay",
         "squelch_db",
+        "squelch_enabled",
         "squelch_rf_level_dbm",
         "show_demod_bandwidth",
         "audio_volume",
@@ -99,6 +172,100 @@ RADIO_PANEL_KEYS = frozenset(
         "digital_profile",
         "digital_symbol_rate_hz",
         "digital_mod_order",
+    }
+)
+
+# Campos del panel RADIO que no deben pisar estado vivo del controlador.
+RADIO_PANEL_STRUCTURAL_KEYS = frozenset(
+    {
+        "operating_mode",
+        "capture_mode",
+        "audio_enabled",
+        "vfo_freq_hz",
+    }
+)
+
+RADIO_PANEL_PATCH_KEYS = RADIO_PANEL_KEYS - RADIO_PANEL_STRUCTURAL_KEYS
+
+# Cambios RADIO que no requieren apply_params completo ni refresco del waterfall.
+RADIO_SOFT_PARAM_KEYS = frozenset(
+    {
+        "audio_muted",
+        "squelch_db",
+        "squelch_enabled",
+        "squelch_rf_level_dbm",
+        "show_demod_bandwidth",
+        "demod_wfm_stereo",
+        "demod_wfm_rds",
+        "demod_wfm_lowpass",
+        "demod_iq_correction",
+        "demod_iq_invert",
+        "demod_noise_blanker_db",
+        "demod_deemphasis",
+        "demod_agc_attack",
+        "demod_agc_decay",
+        "demod_bandwidth_hz",
+        "demod_snap_interval",
+        "freq_readout",
+        "freq_offset_hz",
+    }
+)
+
+# Campos que AUTO puede escribir (ganancias + perfil demod + sintonía lógica).
+AUTO_TUNE_APPLY_KEYS = frozenset(
+    {
+        *RF_GAIN_PARAM_KEYS,
+        "operating_mode",
+        "capture_mode",
+        "audio_enabled",
+        "demod_mode",
+        "demod_bandwidth_hz",
+        "demod_snap_interval",
+        "demod_deemphasis",
+        "demod_noise_blanker_db",
+        "demod_wfm_stereo",
+        "demod_wfm_rds",
+        "demod_wfm_lowpass",
+        "demod_iq_correction",
+        "demod_iq_invert",
+        "freq_readout",
+        "freq_offset_hz",
+        "vfo_freq_hz",
+        "selected_freq_hz",
+        "center_freq_hz",
+        "span_mode",
+        "span_hz",
+        "manual_span_hz",
+        "sample_rate_hz",
+        "baseband_filter_auto",
+        "baseband_filter_bw_hz",
+        "rf_bias_tee_enable",
+        "ref_scale_auto",
+    }
+)
+
+AUTO_TUNE_HW_FROZEN_KEYS = frozenset(
+    {
+        "center_freq_hz",
+        "sample_rate_hz",
+        "span_hz",
+        "manual_span_hz",
+        "capture_mode",
+    }
+)
+
+WATERFALL_DISPLAY_PARAM_KEYS = frozenset(
+    {
+        "waterfall_min_db",
+        "waterfall_max_db",
+        "waterfall_auto_levels",
+        "waterfall_contrast_auto",
+        "waterfall_colormap",
+        "ref_level_dbm",
+        "ref_range_db",
+        "ref_scale_auto",
+        "ref_offset_db",
+        "amplitude_unit",
     }
 )
 
@@ -207,15 +374,45 @@ def is_sdr_rf_gain_only_patch(prev, updated) -> bool:
     return True
 
 
-def diff_param_keys(prev, updated, keys: Iterable[str]) -> list[str]:
-    changed: list[str] = []
+def changed_param_key_names(prev, updated, keys: Iterable[str]) -> list[str]:
+    """Nombres de campo que cambiaron (para merge parcial en apply)."""
+    names: list[str] = []
     for key in keys:
         if not hasattr(prev, key) or not hasattr(updated, key):
             continue
         old = getattr(prev, key)
         new = getattr(updated, key)
         if param_value_changed(key, old, new):
-            changed.append(f"{key}={old!r}->{new!r}")
+            names.append(key)
+    return names
+
+
+def is_auto_tune_hw_unchanged(prev, updated) -> bool:
+    """True si AUTO no exige reconfigurar ventana IQ / centro (captura en vivo)."""
+    for key in AUTO_TUNE_HW_FROZEN_KEYS:
+        if not hasattr(prev, key) or not hasattr(updated, key):
+            continue
+        if param_value_changed(key, getattr(prev, key), getattr(updated, key)):
+            return False
+    return True
+
+
+def is_auto_tune_soft_only_patch(prev, updated) -> bool:
+    """True si los cambios AUTO no requieren apply_params completo."""
+    patch_keys = changed_param_key_names(prev, updated, AUTO_TUNE_APPLY_KEYS)
+    if not patch_keys:
+        return True
+    return all(
+        key in RADIO_SOFT_PARAM_KEYS or key in RF_GAIN_PARAM_KEYS for key in patch_keys
+    )
+
+
+def diff_param_keys(prev, updated, keys: Iterable[str]) -> list[str]:
+    changed: list[str] = []
+    for key in changed_param_key_names(prev, updated, keys):
+        old = getattr(prev, key)
+        new = getattr(updated, key)
+        changed.append(f"{key}={old!r}->{new!r}")
     return changed
 
 

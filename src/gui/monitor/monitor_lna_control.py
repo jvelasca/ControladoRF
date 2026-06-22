@@ -50,11 +50,11 @@ class MonitorLnaControl(QFrame):
 
         self._preamp_btn = QToolButton(self)
         self._preamp_btn.setObjectName("MonitorPreampBtn")
-        self._preamp_btn.setText("P")
         self._preamp_btn.setCheckable(True)
-        self._preamp_btn.setFixedSize(20, 22)
+        self._preamp_btn.setMinimumWidth(34)
+        self._preamp_btn.setFixedHeight(22)
         self._preamp_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self._preamp_btn.clicked.connect(self._on_preamp_clicked)
+        self._preamp_btn.toggled.connect(self._on_preamp_toggled)
 
         row.addWidget(self._spin, stretch=1)
         row.addWidget(self._preamp_btn)
@@ -76,11 +76,20 @@ class MonitorLnaControl(QFrame):
             self._spin.blockSignals(True)
             self._spin.setValue(float(self._params.lna_gain_db))
             self._spin.blockSignals(False)
-            self._preamp_btn.blockSignals(True)
-            self._preamp_btn.setChecked(self._params.rf_amp_enable)
-            self._preamp_btn.blockSignals(False)
+            self._refresh_preamp_button()
         finally:
             self._syncing = False
+
+    def _refresh_preamp_button(self) -> None:
+        if self._preamp_btn is None:
+            return
+        enabled = bool(self._params.rf_amp_enable)
+        self._preamp_btn.blockSignals(True)
+        self._preamp_btn.setChecked(enabled)
+        self._preamp_btn.setText(
+            tr("monitor_readout_pre_on") if enabled else tr("monitor_readout_pre_off")
+        )
+        self._preamp_btn.blockSignals(False)
 
     def recargar_textos(self) -> None:
         self.set_title(tr("monitor_lcd_lna"))
@@ -101,7 +110,7 @@ class MonitorLnaControl(QFrame):
             return
         self._emit_patch(patch_hackrf_lna(self._params, int(value)))
 
-    def _on_preamp_clicked(self, checked: bool) -> None:
+    def _on_preamp_toggled(self, checked: bool) -> None:
         if self._syncing:
             return
         self._emit_patch(patch_hackrf_amp(self._params, enabled=bool(checked)))

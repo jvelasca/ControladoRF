@@ -73,15 +73,24 @@ class DefaultAcquisitionPolicy:
         window = intent.window
         span = window.span_hz
 
-        want_sweep, reason = _wants_sweep(
-            span,
-            instant_bw_hz=instant,
-            operating_mode=intent.operating_mode,
-        )
+        if not caps.supports_iq_stream:
+            want_sweep = caps.supports_sweep
+            reason = "analyzer_only_sweep" if want_sweep else "analyzer_no_capture"
+        else:
+            want_sweep, reason = _wants_sweep(
+                span,
+                instant_bw_hz=instant,
+                operating_mode=intent.operating_mode,
+            )
 
         hw = intent.hardware
         if want_sweep and caps.supports_sweep:
-            rbw = _clamp_sweep_rbw(span, caps)
+            if intent.analysis.rbw_auto:
+                rbw = _clamp_sweep_rbw(span, caps)
+            else:
+                from core.rf.display import clamp_sweep_rbw_hz
+
+                rbw = clamp_sweep_rbw_hz(float(intent.analysis.rbw_hz))
             sweep = SweepPlan(
                 start_hz=window.start_hz,
                 stop_hz=window.stop_hz,

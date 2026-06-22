@@ -11,7 +11,12 @@ from PyQt6.QtWidgets import QWidget
 
 from core.monitor.spectrum_params import SpectrumFrame, SpectrumParams
 from core.monitor.spectrum_plot_mapping import plot_freq_bounds, resample_power_to_grid
-from core.monitor.waterfall_colormap import power_db_to_rgb, resolve_waterfall_levels
+from core.monitor.monitor_bw_profile import plot_resample_method
+from core.monitor.waterfall_colormap import (
+    HISTORY_AUTO_MARGIN_DB,
+    power_db_to_rgb,
+    resolve_waterfall_levels,
+)
 from gui.monitor.monitor_marker_draw import draw_f_tune_indicator, draw_fc_center_indicator, draw_markers_on_plot
 from gui.monitor.monitor_supervision_draw import (
     draw_supervision_offscreen_indicators,
@@ -61,6 +66,9 @@ class MonitorWaterfallWidget(QWidget):
         self._supervision_blink_timer.setInterval(400)
         self._supervision_blink_timer.timeout.connect(self._on_supervision_blink)
         self._image: Optional[QImage] = None
+        self._contrast_bottom_ema: float | None = None
+        self._contrast_top_ema: float | None = None
+        self._ref_smooth: tuple[float, float] | None = None
         self.setMinimumHeight(120)
 
         self.levels = MonitorWaterfallLevelSliders(self)
@@ -81,7 +89,13 @@ class MonitorWaterfallWidget(QWidget):
         self.update()
 
     def set_analyzer_params(self, params: SpectrumParams) -> None:
-        old_start, old_stop = plot_freq_bounds(self._params, self._freqs)
+        from core.monitor.monitor_flow_log import (
+            WATERFALL_DISPLAY_PARAM_KEYS,
+            changed_param_key_names,
+        )
+
+        prev = self._params
+        old_start, old_stop = plot_freq_bounds(prev, self._freqs)
         self._params = params.copy()
         self.levels.set_params(
             params,
@@ -91,7 +105,9 @@ class MonitorWaterfallWidget(QWidget):
         new_start, new_stop = plot_freq_bounds(self._params, self._freqs)
         if (old_start, old_stop) != (new_start, new_stop) and self._history:
             self.clear_history()
-        elif self._history:
+        elif self._history and changed_param_key_names(
+            prev, self._params, WATERFALL_DISPLAY_PARAM_KEYS
+        ):
             self._rebuild_image()
             self.update()
 
@@ -131,6 +147,28 @@ class MonitorWaterfallWidget(QWidget):
         """Vacía el historial (p. ej. al cambiar RBW/fft_size)."""
         self._history.clear()
         self._image = None
+        self._contrast_bottom_ema = None
+        self._contrast_top_ema = None
+        self._ref_smooth = None
+
+    def _track_contrast_ema(self, row: np.ndarray) -> None:
+        """Suaviza min/max por línea (evita parpadeos horizontales en AUTO contraste)."""
+        if row.size == 0:
+            return
+        row_min = float(np.min(row))
+        row_max = float(np.max(row))
+        alpha = 0.06
+        margin = HISTORY_AUTO_MARGIN_DB
+        if self._contrast_bottom_ema is None:
+            self._contrast_bottom_ema = row_min - margin
+            self._contrast_top_ema = row_max + margin
+            return
+        self._contrast_bottom_ema = (
+            self._contrast_bottom_ema * (1.0 - alpha) + (row_min - margin) * alpha
+        )
+        self._contrast_top_ema = (
+            self._contrast_top_ema * (1.0 - alpha) + (row_max + margin) * alpha
+        )
 
     @pyqtSlot(object)
     def update_frame(self, frame: SpectrumFrame) -> None:
@@ -146,23 +184,46 @@ class MonitorWaterfallWidget(QWidget):
             start_hz=start,
             stop_hz=stop,
             num_columns=n_cols,
+            method=plot_resample_method(self._params),
         )
         if self._history and int(self._history[-1].shape[0]) != int(resampled.shape[0]):
             self.clear_history()
         if self._params.ref_scale_auto:
-            self._ref_dbm = float(frame.ref_level_dbm)
-            self._ref_range_db = float(frame.ref_range_db)
+            from core.rf.presentation.scale import stabilize_ref_level_dbm, stabilize_ref_range_db
+
+            target_ref = float(frame.ref_level_dbm)
+            target_rng = float(frame.ref_range_db)
+            if self._ref_smooth is None:
+                self._ref_dbm = target_ref
+                self._ref_range_db = stabilize_ref_range_db(target_rng, None)
+                self._ref_smooth = (self._ref_dbm, self._ref_range_db)
+            else:
+                prev_ref, prev_rng = self._ref_smooth
+                self._ref_dbm = stabilize_ref_level_dbm(target_ref, prev_ref)
+                self._ref_range_db = stabilize_ref_range_db(target_rng, prev_rng)
+                self._ref_smooth = (self._ref_dbm, self._ref_range_db)
         else:
+            self._ref_smooth = None
             self._ref_dbm = float(self._params.ref_level_dbm)
             self._ref_range_db = float(self._params.ref_range_db)
         self._history.append(resampled)
         if self._params.waterfall_contrast_auto:
-            self._rebuild_image()
-        else:
-            self._append_scrolled_line(resampled)
+            self._track_contrast_ema(resampled)
+        self._append_scrolled_line(resampled)
         self.update()
 
     def _waterfall_levels(self, history_power_db: np.ndarray | None = None) -> tuple[float, float]:
+        if (
+            self._params.waterfall_contrast_auto
+            and self._contrast_bottom_ema is not None
+            and self._contrast_top_ema is not None
+            and (history_power_db is None or history_power_db.size == 0)
+        ):
+            bottom = float(self._contrast_bottom_ema)
+            top = float(self._contrast_top_ema)
+            if bottom >= top:
+                top = bottom + 20.0
+            return bottom, top
         return resolve_waterfall_levels(
             min_db=self._params.waterfall_min_db,
             max_db=self._params.waterfall_max_db,
@@ -204,7 +265,8 @@ class MonitorWaterfallWidget(QWidget):
         ).copy()
 
         painter = QPainter(self._image)
-        painter.drawImage(QRect(0, 1, width, height - 1), self._image, QRect(0, 0, width, height - 1))
+        src = self._image.copy(QRect(0, 0, width, height - 1))
+        painter.drawImage(0, 1, src)
         painter.drawImage(0, 0, row_img)
         painter.end()
 

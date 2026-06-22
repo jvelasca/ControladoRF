@@ -141,6 +141,9 @@ class MainWindow(QMainWindow, WorkspaceAware):
 
         self._menu_bar.get_config_action().triggered.connect(self._show_config_dialog)
         self._menu_bar.get_workspaces_action().triggered.connect(self._show_workspace_manager)
+        channelization_action = self._menu_bar.get_channelization_action()
+        if channelization_action:
+            channelization_action.triggered.connect(self._show_channelization_dialog)
         help_manual = self._menu_bar.get_help_manual_action()
         if help_manual:
             help_manual.triggered.connect(self._show_help_manual)
@@ -255,7 +258,7 @@ class MainWindow(QMainWindow, WorkspaceAware):
                 self._project_manager._store_get_config,
                 self._project_manager._store_set_config,
             )
-        toolbar.params_changed.connect(controller.apply_params)
+        toolbar.params_changed.connect(controller.apply_toolbar_params)
         controller.params_updated.connect(toolbar.set_params)
         controller.toolbar_sync_requested.connect(toolbar.set_params)
         controller.bind_toolbar(toolbar)
@@ -274,6 +277,40 @@ class MainWindow(QMainWindow, WorkspaceAware):
             controller.bind_database(lambda: self._database_service)
         controller.bind_app_status_bar(self._supervision_status_bar)
         controller.bind_main_window_actions(focus_monitor_alarms=self._focus_monitor_alarms)
+        if self._app_services and self._app_services.channelization:
+            ch = self._app_services.channelization
+            toolbar.set_channelization_service(ch)
+            controller.bind_channelization(lambda: ch)
+            controller.get_spectrum_widget().channelization_dialog_requested.connect(
+                self._show_channelization_dialog
+            )
+            state = ch.get_state()
+            from core.monitor.monitor_freq_span_logic import patch_freq_input_mode
+
+            params = controller.get_params()
+            if params.freq_input_mode != state.input_mode:
+                controller.apply_params(patch_freq_input_mode(params, state.input_mode))
+
+    def _apply_channelization_prefs(self) -> None:
+        if not self._app_services or not self._app_services.channelization:
+            return
+        ch = self._app_services.channelization
+        toolbar = self._tool_bar.get_monitor_toolbar()
+        if toolbar is not None:
+            toolbar.set_channelization_service(ch)
+        monitor_ws = self._module_tab_manager.get_workspace("monitor")
+        controller = monitor_ws.get_monitor_controller() if monitor_ws else None
+        if controller is not None:
+            from core.monitor.monitor_freq_span_logic import patch_freq_input_mode
+
+            state = ch.get_state()
+            controller.apply_params(
+                patch_freq_input_mode(controller.get_params(), state.input_mode)
+            )
+            controller.refresh_channelization_ui()
+        inv_ws = self._module_tab_manager.get_workspace("inventario_rf")
+        if inv_ws is not None:
+            inv_ws.set_channelization_service(ch)
 
     def _focus_monitor_alarms(self) -> None:
         self._module_tab_manager.set_active_module("monitor")
@@ -496,6 +533,8 @@ class MainWindow(QMainWindow, WorkspaceAware):
 
         workspace = self._module_tab_manager.get_workspace("inventario_rf")
         workspace.set_inventory_resolver(self._resolve_inventory_equipo)
+        if self._app_services and self._app_services.channelization:
+            workspace.set_channelization_service(self._app_services.channelization)
         content = workspace.get_panel("lista").content
         if not isinstance(content, InventoryListPanel):
             return
@@ -654,6 +693,16 @@ class MainWindow(QMainWindow, WorkspaceAware):
         )
         dlg.setModal(True)
         dlg.exec()
+
+    def _show_channelization_dialog(self) -> None:
+        if not self._app_services or not self._app_services.channelization:
+            return
+        from gui.channelization_dialog import ChannelizationDialog
+
+        dlg = ChannelizationDialog(self._app_services.channelization, self)
+        dlg.setModal(True)
+        if dlg.exec():
+            self._apply_channelization_prefs()
 
     def _on_rename_project(self) -> None:
         if not self._project_manager or not self._project_manager.project:
@@ -1092,12 +1141,12 @@ class MainWindow(QMainWindow, WorkspaceAware):
                 return
             self._closing = True
             if self._project_manager and self._project_manager.has_open_project:
-                self._flush_all_module_layouts(mark_dirty=False)
+                self._flush_all_module_layouts(mark_dirty=True)
                 self._project_manager.set_active_module(
                     self._module_tab_manager.active_module,
                     mark_dirty=False,
                 )
-                if self._project_manager.is_dirty and self._project_manager.file_path:
+                if self._project_manager.file_path:
                     try:
                         self._project_manager.save_project()
                     except ProjectIOError as exc:

@@ -192,3 +192,26 @@ def make_audio_mute_icon(widget: QWidget, *, muted: bool = False) -> QIcon:
         painter.drawLine(2, 15, 16, 3)
     painter.end()
     return QIcon(pixmap)
+
+
+def make_squelch_icon(widget: QWidget, *, enabled: bool = True) -> QIcon:
+    """SQ con indicador; tachado si desactivado."""
+    color = toolbar_icon_color(widget)
+    px = _ICON_PX
+    pixmap = QPixmap(px, px)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+    pen = QPen(color, 1.2)
+    painter.setPen(pen)
+    font = painter.font()
+    font.setBold(True)
+    font.setPointSize(7)
+    painter.setFont(font)
+    painter.drawText(2, 13, "SQ")
+    if not enabled:
+        pen.setWidthF(1.6)
+        painter.setPen(pen)
+        painter.drawLine(2, 15, 16, 3)
+    painter.end()
+    return QIcon(pixmap)

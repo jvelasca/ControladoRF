@@ -11,10 +11,7 @@ def test_squelch_closes_below_threshold():
 
 def test_squelch_opens_above_threshold():
     state = DemodStreamState()
-    for _ in range(20):
-        _update_squelch(state, -58.0, -81.0)
-    for level in (-35.0, -30.0, -25.0):
-        _update_squelch(state, level, -81.0)
+    _update_squelch(state, -35.0, -81.0)
     assert state.squelch_open is True
 
 
@@ -28,23 +25,18 @@ def test_squelch_hysteresis():
     assert state.squelch_open is False
 
 
-def test_squelch_blocks_fm_noise_without_station():
-    """Ruido FM de fondo (~-55 dBFS) no abre aunque el umbral absoluto sea bajo."""
+def test_squelch_respects_threshold_while_open():
     state = DemodStreamState()
-    for _ in range(80):
-        _update_squelch(state, -55.0, -81.0)
-    assert state.squelch_open is False
-    assert state.squelch_noise_floor_dbfs > -60.0
-
-
-def test_squelch_opens_when_signal_above_noise_floor():
-    state = DemodStreamState()
-    for _ in range(40):
-        _update_squelch(state, -58.0, -81.0)
-    assert state.squelch_open is False
-    for _ in range(10):
-        _update_squelch(state, -28.0, -81.0)
+    _update_squelch(state, -25.0, -40.0)
     assert state.squelch_open is True
+    _update_squelch(state, -25.0, -20.0)
+    assert state.squelch_open is False
+
+
+def test_squelch_disabled_always_open():
+    state = DemodStreamState()
+    state.squelch_open = False
+    assert _update_squelch(state, -90.0, -40.0, enabled=False) is True
 
 
 def test_squelch_minimum_threshold_stays_open():
@@ -55,9 +47,17 @@ def test_squelch_minimum_threshold_stays_open():
         assert _update_squelch(state, level, -120.0) is True
 
 
+def test_squelch_passes_audio_disabled():
+    from core.monitor.demod_dsp import squelch_passes_audio
+
+    assert squelch_passes_audio(squelch_enabled=False, squelch_db=-40.0, squelch_open=False)
+    assert squelch_passes_audio(squelch_enabled=True, squelch_db=-120.0, squelch_open=False)
+    assert not squelch_passes_audio(squelch_enabled=True, squelch_db=-40.0, squelch_open=False)
+    assert squelch_passes_audio(squelch_enabled=True, squelch_db=-40.0, squelch_open=True)
+
+
 def test_squelch_low_threshold_opens_after_strong_signal():
     state = DemodStreamState()
-    for _ in range(5):
-        _update_squelch(state, -25.0, -50.0)
+    _update_squelch(state, -25.0, -50.0)
     assert state.squelch_open is True
     assert _update_squelch(state, -25.0, -120.0) is True

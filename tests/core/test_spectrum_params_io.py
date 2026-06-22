@@ -174,3 +174,43 @@ def test_sweep_timeout_scales_with_span():
     params.apply_span_mode()
     t = sweep_timeout_sec(params)
     assert t >= 12.0
+
+
+def test_radio_audio_params_roundtrip():
+    base = SpectrumParams(
+        operating_mode=MonitorOperatingMode.SDR.value,
+        audio_muted=True,
+        audio_volume=0.42,
+        squelch_enabled=True,
+        squelch_db=-18.5,
+        demod_wfm_stereo=True,
+        demod_wfm_rds=False,
+        demod_wfm_lowpass=True,
+        show_demod_bandwidth=True,
+    )
+    data = params_to_dict(base)
+    restored = params_from_dict(data, base=SpectrumParams())
+    assert restored.audio_muted is True
+    assert abs(restored.audio_volume - 0.42) < 0.001
+    assert restored.squelch_enabled is True
+    assert abs(restored.squelch_db - (-18.5)) < 0.01
+    assert restored.demod_wfm_stereo is True
+    assert restored.demod_wfm_rds is False
+
+
+def test_analyzer_mode_params_roundtrip():
+    base = SpectrumParams(
+        operating_mode=MonitorOperatingMode.SPECTRUM.value,
+        ref_level_dbm=-30.0,
+        lna_gain_db=24,
+        vga_gain_db=20,
+        span_mode="manual",
+        manual_span_hz=40_000_000.0,
+    )
+    refresh_capture_and_span_limits(base)
+    data = params_to_dict(base)
+    restored = params_from_dict(data, base=SpectrumParams())
+    assert restored.operating_mode == MonitorOperatingMode.SPECTRUM.value
+    assert restored.ref_level_dbm == -30.0
+    assert restored.lna_gain_db == 24
+    assert restored.manual_span_hz == 40_000_000.0

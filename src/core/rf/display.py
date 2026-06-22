@@ -87,6 +87,12 @@ def display_trace_bins(params: SpectrumParams) -> int:
 
 
 def pick_auto_fft_size(params: SpectrumParams) -> int:
+    if bool(getattr(params, "iq_trace_sharp", False)) and params.capture_mode == "iq":
+        sr = max(float(params.sample_rate_hz or 0.0), float(params.display_span_hz() or 0.0))
+        if sr >= 10_000_000.0:
+            return 2048
+        if sr >= 4_000_000.0:
+            return 1024
     return snap_fft_size(ANALYZER_AUTO_POINTS, min_size=256)
 
 

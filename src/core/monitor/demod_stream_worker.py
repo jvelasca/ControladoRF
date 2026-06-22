@@ -6,6 +6,7 @@ import time
 from typing import Callable, Optional, Any
 
 from core.monitor.demod_branch import DemodBranch, DemodState, DemodUiState
+from core.monitor.demod_dsp import demod_tune_freq_hz
 from core.monitor.iq_constants import IQ_DEMOD_CHUNK_SAMPLES
 from core.monitor.spectrum_params import SpectrumParams
 from core.monitor.spectrum_source import SpectrumSource
@@ -34,7 +35,7 @@ class DemodStreamWorker:
         self._stop = stop_event
         self._thread: Optional[threading.Thread] = None
         self._chain_key: tuple[float, float, float, float, str] | None = None
-        self._last_squelch_db: float | None = None
+        self._last_squelch_key: tuple[float, bool] | None = None
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -51,13 +52,13 @@ class DemodStreamWorker:
             self._thread.join(timeout=timeout)
         self._thread = None
         self._chain_key = None
-        self._last_squelch_db = None
+        self._last_squelch_key = None
 
     def _sync_chain_to_params(self, params: SpectrumParams) -> None:
         key = (
             float(params.sample_rate_hz),
             float(params.center_freq_hz),
-            float(params.vfo_freq_hz),
+            float(demod_tune_freq_hz(params)),
             float(params.demod_bandwidth_hz),
             (params.demod_mode or "fm").lower(),
         )
@@ -68,12 +69,13 @@ class DemodStreamWorker:
                 self._demod.reset()
             self._chain_key = key
 
-        squelch = float(params.squelch_db)
-        if squelch <= -112.0 or (
-            self._last_squelch_db is not None and squelch < self._last_squelch_db - 0.25
-        ):
-            self._demod.relax_squelch()
-        self._last_squelch_db = squelch
+        squelch_key = (float(params.squelch_db), bool(params.squelch_enabled))
+        if self._last_squelch_key != squelch_key:
+            if params.squelch_enabled:
+                self._demod.reset_squelch_tracking(force_reeval=True)
+            else:
+                self._demod.relax_squelch()
+            self._last_squelch_key = squelch_key
 
     def _run(self) -> None:
         last_ui_emit = 0.0
@@ -82,7 +84,7 @@ class DemodStreamWorker:
             if not params.demod_enabled() or params.capture_mode != "iq":
                 self._demod.reset()
                 self._chain_key = None
-                self._last_squelch_db = None
+                self._last_squelch_key = None
                 time.sleep(0.03)
                 continue
 
@@ -98,9 +100,10 @@ class DemodStreamWorker:
             gap_reset = getattr(self._source, "consume_iq_gap_flag", None)
             rate = max(float(params.sample_rate_hz), 1.0)
             chunk_sec = IQ_DEMOD_CHUNK_SAMPLES / rate
-            max_chunks = max(1, min(8, int(0.030 / max(chunk_sec, 1e-6))))
+            max_chunks = max(1, min(4, int(0.025 / max(chunk_sec, 1e-6))))
             if callable(pending_fn) and pending_fn() > IQ_DEMOD_CHUNK_SAMPLES * 4:
-                max_chunks = min(12, max_chunks + 2)
+                max_chunks = min(6, max_chunks + 1)
+            processed_sec = 0.0
             while chunks < max_chunks and not self._stop.is_set():
                 if callable(gap_reset) and gap_reset():
                     self._demod.reset_signal_chain()
@@ -123,8 +126,9 @@ class DemodStreamWorker:
                         self._on_ui(DemodUiState.from_state(state))
                         last_ui_emit = now
                 chunks += 1
+                processed_sec += chunk_sec
 
             if chunks == 0:
-                time.sleep(0.004)
+                time.sleep(0.010)
             else:
-                time.sleep(0.001)
+                time.sleep(max(0.004, processed_sec * 0.75))

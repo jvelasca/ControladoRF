@@ -4,75 +4,17 @@ from __future__ import annotations
 from typing import Optional
 
 import numpy as np
-from PyQt6.QtCore import Qt, QRect
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from core.monitor.demod_branch import DemodState, DemodUiState
+from core.monitor.demod_branch import DemodUiState
+from gui.monitor.led_meter_widget import CompactLedMeterBar
 from i18n.json_translation import tr
 
 _VU_MIN_DB = -54.0
 _VU_MAX_DB = 0.0
-_VU_LED_COUNT = 20
-_VU_ORANGE_DB = -12.0
-_VU_RED_DB = -3.0
-
-
-def _segment_color(dbfs: float) -> QColor:
-    if dbfs >= _VU_RED_DB:
-        return QColor(235, 70, 70)
-    if dbfs >= _VU_ORANGE_DB:
-        return QColor(240, 170, 55)
-    return QColor(55, 205, 95)
-
-
-def _db_to_segment_index(dbfs: float) -> int:
-    clamped = max(_VU_MIN_DB, min(_VU_MAX_DB, float(dbfs)))
-    ratio = (clamped - _VU_MIN_DB) / (_VU_MAX_DB - _VU_MIN_DB)
-    return int(round(ratio * (_VU_LED_COUNT - 1)))
-
-
-class _LedBarWidget(QFrame):
-    """Solo la tira de LEDs (sin solapar etiquetas)."""
-
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
-        super().__init__(parent)
-        self.setFixedHeight(22)
-        self._vu_dbfs = -120.0
-        self._peak_dbfs = -120.0
-        self._active = False
-
-    def set_levels(self, *, vu_dbfs: float, peak_dbfs: float, active: bool) -> None:
-        self._vu_dbfs = float(vu_dbfs)
-        self._peak_dbfs = float(peak_dbfs)
-        self._active = active
-        self.update()
-
-    def paintEvent(self, _event) -> None:
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
-        rect = self.rect().adjusted(0, 1, 0, -1)
-        gap = 3
-        seg_w = max(4, (rect.width() - gap * (_VU_LED_COUNT - 1)) // _VU_LED_COUNT)
-        seg_h = rect.height()
-        lit_idx = _db_to_segment_index(self._vu_dbfs) if self._active else -1
-        peak_idx = _db_to_segment_index(self._peak_dbfs) if self._active else -1
-        for i in range(_VU_LED_COUNT):
-            x = rect.left() + i * (seg_w + gap)
-            seg_rect = QRect(x, rect.top(), seg_w, seg_h)
-            db = _VU_MIN_DB + (i / max(_VU_LED_COUNT - 1, 1)) * (_VU_MAX_DB - _VU_MIN_DB)
-            if not self._active:
-                color = QColor(28, 32, 38)
-            elif i <= lit_idx:
-                color = _segment_color(db)
-            else:
-                color = _segment_color(db).darker(280)
-            painter.fillRect(seg_rect, color)
-            if self._active and i == peak_idx and i > lit_idx:
-                painter.fillRect(seg_rect, _segment_color(db).lighter(130))
-            painter.setPen(QColor(8, 10, 12))
-            painter.drawRect(seg_rect)
-        painter.end()
+_VU_SEGMENTS = 14
 
 
 class DemodScopeWidget(QFrame):
@@ -128,52 +70,43 @@ class DemodScopeWidget(QFrame):
 
 
 class DemodLedVuMeterWidget(QFrame):
-    """Vúmetro LED broadcast (verde / naranja / rojo)."""
+    """Vúmetro LED broadcast compacto (verde / naranja / rojo)."""
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setObjectName("MonitorDemodLedVu")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        layout.setSpacing(2)
 
+        header = QHBoxLayout()
+        header.setContentsMargins(0, 0, 0, 0)
         self._title = QLabel(tr("monitor_demod_vu"))
         self._title.setObjectName("MonitorDemodVuTitle")
-        layout.addWidget(self._title)
-
-        scale_row = QHBoxLayout()
-        scale_row.setContentsMargins(0, 0, 0, 0)
-        scale_row.setSpacing(0)
-        self._scale_min = QLabel(f"{int(_VU_MIN_DB)}")
-        self._scale_min.setObjectName("MonitorDemodVuScaleMin")
-        self._scale_max = QLabel("0 dBFS")
-        self._scale_max.setObjectName("MonitorDemodVuScaleMax")
-        self._scale_max.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        scale_font = QFont("Consolas", 7)
-        self._scale_min.setFont(scale_font)
-        self._scale_max.setFont(scale_font)
-        scale_row.addWidget(self._scale_min)
-        scale_row.addStretch(1)
-        scale_row.addWidget(self._scale_max)
-        layout.addLayout(scale_row)
-
-        self._led_bar = _LedBarWidget(self)
-        layout.addWidget(self._led_bar)
-
-        row = QHBoxLayout()
-        row.setContentsMargins(0, 2, 0, 0)
-        row.setSpacing(8)
-        self._level_readout = QLabel("—")
-        self._level_readout.setObjectName("MonitorDemodVuLevel")
-        self._level_readout.setMinimumHeight(16)
+        header.addWidget(self._title)
+        header.addStretch(1)
         self._peak_readout = QLabel("")
         self._peak_readout.setObjectName("MonitorDemodVuPeak")
-        self._peak_readout.setMinimumHeight(16)
+        self._peak_readout.setFont(QFont("Consolas", 7))
         self._peak_readout.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        row.addWidget(self._level_readout)
-        row.addStretch(1)
-        row.addWidget(self._peak_readout)
-        layout.addLayout(row)
+        header.addWidget(self._peak_readout)
+        layout.addLayout(header)
+
+        self._led_bar = CompactLedMeterBar(
+            segments=_VU_SEGMENTS,
+            height=12,
+            min_db=_VU_MIN_DB,
+            max_db=_VU_MAX_DB,
+            mode="vu",
+            parent=self,
+        )
+        layout.addWidget(self._led_bar)
+
+        self._level_readout = QLabel("—")
+        self._level_readout.setObjectName("MonitorDemodVuLevel")
+        self._level_readout.setFont(QFont("Consolas", 7))
+        self._level_readout.setMinimumHeight(14)
+        layout.addWidget(self._level_readout)
 
         self._peak_hold_dbfs = -120.0
 
@@ -182,7 +115,11 @@ class DemodLedVuMeterWidget(QFrame):
             self._peak_hold_dbfs = peak_dbfs
         elif not active:
             self._peak_hold_dbfs = -120.0
-        self._led_bar.set_levels(vu_dbfs=vu_dbfs, peak_dbfs=self._peak_hold_dbfs, active=active)
+        self._led_bar.set_level(
+            vu_dbfs if active else None,
+            peak_db=self._peak_hold_dbfs if active else None,
+            active=active,
+        )
         if not active:
             self._level_readout.setText("—")
             self._peak_readout.setText("")

@@ -142,6 +142,61 @@ MIGRATIONS: List[Migration] = [
             ON supervision_events(project_key, alarm_type);
         """,
     ),
+    (
+        "008_rf_channelization",
+        """
+        CREATE TABLE IF NOT EXISTS rf_standards (
+            id TEXT PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
+            region_code TEXT NOT NULL,
+            service_type TEXT NOT NULL,
+            freq_min_hz REAL,
+            freq_max_hz REAL,
+            channel_spacing_hz REAL,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            enabled INTEGER NOT NULL DEFAULT 1
+        );
+        CREATE TABLE IF NOT EXISTS rf_standard_channels (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            standard_id TEXT NOT NULL,
+            channel_number INTEGER,
+            channel_label TEXT NOT NULL,
+            center_freq_hz REAL NOT NULL,
+            bandwidth_hz REAL NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            FOREIGN KEY (standard_id) REFERENCES rf_standards(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_rf_std_channels_standard
+            ON rf_standard_channels(standard_id);
+        CREATE TABLE IF NOT EXISTS rf_standard_regions (
+            region_code TEXT NOT NULL,
+            standard_id TEXT NOT NULL,
+            priority INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (region_code, standard_id),
+            FOREIGN KEY (standard_id) REFERENCES rf_standards(id)
+        );
+        CREATE TABLE IF NOT EXISTS rf_channel_restrictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            standard_id TEXT NOT NULL,
+            label TEXT NOT NULL,
+            freq_min_hz REAL NOT NULL,
+            freq_max_hz REAL NOT NULL,
+            severity TEXT NOT NULL DEFAULT 'warning',
+            color_hex TEXT NOT NULL DEFAULT '#c0404088',
+            message_key TEXT NOT NULL DEFAULT '',
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            FOREIGN KEY (standard_id) REFERENCES rf_standards(id)
+        );
+        CREATE INDEX IF NOT EXISTS idx_rf_restrictions_standard
+            ON rf_channel_restrictions(standard_id);
+        CREATE TABLE IF NOT EXISTS rf_app_channelization (
+            key TEXT PRIMARY KEY NOT NULL,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        """,
+    ),
 ]
 
 

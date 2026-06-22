@@ -36,3 +36,17 @@ def test_plot_freq_bounds_uses_frame_in_center_span_mode():
     start, stop = plot_freq_bounds(params, freqs)
     assert start == pytest.approx(95_000_000.0)
     assert stop == pytest.approx(105_000_000.0)
+
+
+def test_plot_freq_bounds_iq_crops_usable_center_bandwidth():
+    """IQ: no pintar el 10 % exterior de cada borde (roll-off / lobos FI-FF)."""
+    params = SpectrumParams(
+        operating_mode="sdr",
+        capture_mode="iq",
+        center_freq_hz=100_000_000.0,
+        sample_rate_hz=10_000_000.0,
+    )
+    freqs = np.linspace(95_000_000.0, 105_000_000.0, 1024)
+    start, stop = plot_freq_bounds(params, freqs)
+    assert start == pytest.approx(96_000_000.0)
+    assert stop == pytest.approx(104_000_000.0)

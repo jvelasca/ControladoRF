@@ -129,3 +129,4 @@ Esta plantilla proporciona una estructura modular y escalable para el desarrollo
 - Consulta **`docs/ayuda.md`** (es) / **`docs/help.md`** (en) para el manual de usuario (menú Ayuda).
 - Consulta **`docs/monitor_supervision_ayuda.md`** (es) / **`docs/monitor_supervision_help.md`** (en) para supervisión RF.
 - Consulta **`docs/distribucion_w11.md`** para generar el paquete ZIP de distribución Windows 11.
+- Consulta **`docs/canalizacion_rf_global.md`** para el diseño del sistema mundial de canalizaciones RF (modo canal, estándares, restricciones).

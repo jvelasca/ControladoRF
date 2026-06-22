@@ -11,10 +11,12 @@ from core.monitor.demod_dsp import AUDIO_RATE_HZ
 
 try:
     from PyQt6.QtMultimedia import QAudioFormat, QAudioSink, QMediaDevices
+    from PyQt6.QtMultimedia import QAudio
 except ImportError:  # pragma: no cover
     QAudioFormat = None  # type: ignore
     QAudioSink = None  # type: ignore
     QMediaDevices = None  # type: ignore
+    QAudio = None  # type: ignore
 
 _PCM_BUFFER_SEC = 1.0
 
@@ -57,6 +59,11 @@ class DemodAudioOutput(QObject):
     def set_volume(self, volume: float) -> None:
         self._volume = max(0.0, min(1.0, float(volume)))
 
+    def restart(self, *, stereo: bool = False) -> bool:
+        """Reinicia el sink (solo hilo GUI)."""
+        self.stop()
+        return self.start(stereo=stereo)
+
     def start(self, *, stereo: bool = False) -> bool:
         if QAudioSink is None or QMediaDevices is None:
             self._last_error = "QtMultimedia no disponible"
@@ -87,6 +94,10 @@ class DemodAudioOutput(QObject):
         except AttributeError:
             pass
         self._io = self._sink.start()
+        if self._io is None:
+            self._last_error = "No se pudo iniciar QAudioSink"
+            self.stop()
+            return False
         self._last_error = ""
         self._pump_thread = _AudioPumpThread(self)
         self._pump_thread.start()
@@ -112,14 +123,15 @@ class DemodAudioOutput(QObject):
         volume: float | None = None,
         stereo: bool = False,
     ) -> None:
-        if pcm.size == 0:
+        if pcm.size == 0 or self._sink is None or self._io is None:
             return
-        if stereo and self._channel_count != 2:
-            self.start(stereo=True)
-        elif not stereo and self._channel_count != 1:
-            self.start(stereo=False)
         vol = self._volume if volume is None else max(0.0, min(1.0, float(volume)))
         samples = np.asarray(pcm, dtype=np.float32).reshape(-1)
+        want_stereo = bool(stereo)
+        if want_stereo and self._channel_count == 1:
+            samples = samples[0::2] if samples.size >= 2 else samples
+        elif not want_stereo and self._channel_count == 2:
+            samples = np.column_stack([samples, samples]).reshape(-1)
         if not squelch_open or vol <= 0.0:
             samples = np.zeros_like(samples)
         else:
@@ -139,6 +151,15 @@ class DemodAudioOutput(QObject):
         io = self._io
         if sink is None or io is None:
             return
+        if QAudio is not None:
+            state = sink.state()
+            if state == QAudio.State.StoppedState:
+                self._io = sink.start()
+                io = self._io
+                if io is None:
+                    return
+            elif state == QAudio.State.SuspendedState:
+                sink.resume()
         for _ in range(12):
             free = int(sink.bytesFree())
             if free <= 0:

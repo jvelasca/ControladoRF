@@ -101,3 +101,35 @@ def test_rf_link_metrics_detects_tone():
     assert metrics.snr_db is not None
     assert metrics.snr_db > 20.0
     assert metrics.link_score > 40
+
+
+def test_rf_link_metrics_acp_uses_adjacent_bands():
+    center = 100_000_000.0
+    n = 2048
+    freqs = np.linspace(center - 2_000_000, center + 2_000_000, n)
+    power = np.full(n, -95.0)
+    main_mask = (freqs >= center - 100_000) & (freqs <= center + 100_000)
+    power[main_mask] = -45.0
+    left_mask = (freqs >= center - 300_000) & (freqs < center - 100_000)
+    power[left_mask] = -80.0
+    right_mask = (freqs > center + 100_000) & (freqs <= center + 300_000)
+    power[right_mask] = -75.0
+
+    params = SpectrumParams(
+        center_freq_hz=center,
+        span_hz=4_000_000,
+        selected_freq_hz=center,
+        demod_bandwidth_hz=200_000,
+        freq_readout="f",
+    )
+    frame = SpectrumFrame(
+        freqs_hz=freqs,
+        power_db=power,
+        center_freq_hz=center,
+        span_hz=4_000_000,
+    )
+    metrics = compute_rf_link_metrics(frame, params)
+    assert metrics.acp_left_db is not None
+    assert metrics.acp_right_db is not None
+    assert metrics.acp_left_db > 30.0
+    assert metrics.acp_right_db > 25.0

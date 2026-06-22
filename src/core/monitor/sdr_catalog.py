@@ -228,18 +228,66 @@ SDR_DEVICE_CATALOG: Tuple[SdrDeviceSpec, ...] = (
         python_packages=("pyairspy",),
         install_steps=_airspy_hf_steps(),
     ),
+    SdrDeviceSpec(
+        device_id="rf_explorer",
+        display_name="RF Explorer",
+        sdrpp_source="rf_explorer_source",
+        usb_name_patterns=("RF Explorer", "CP210"),
+        usb_text_patterns=(r"rf explorer", r"rfexplorer", r"10c4:ea60"),
+        vid_pid=("10c4:ea60",),
+        python_packages=("pyserial",),
+        install_steps={
+            "win32": (
+                InstallStep(
+                    "driver",
+                    "monitor_setup_rf_explorer_win_driver_title",
+                    "monitor_setup_rf_explorer_win_driver_detail",
+                    "monitor_setup_rf_explorer_win_driver_cmd",
+                    "https://www.rf-explorer.com/drivers",
+                ),
+                InstallStep(
+                    "python",
+                    "monitor_setup_rf_explorer_python_title",
+                    "monitor_setup_rf_explorer_python_detail",
+                    "monitor_setup_rf_explorer_python_cmd",
+                    "https://pypi.org/project/pyserial/",
+                ),
+            ),
+        },
+    ),
+    SdrDeviceSpec(
+        device_id="tinysa",
+        display_name="TinySA",
+        sdrpp_source="tinysa_source",
+        usb_name_patterns=("TinySA",),
+        usb_text_patterns=(r"tinysa", r"tiny sa"),
+        python_packages=("pyserial",),
+        install_steps={
+            "win32": (
+                InstallStep(
+                    "driver",
+                    "monitor_setup_tinysa_win_driver_title",
+                    "monitor_setup_tinysa_win_driver_detail",
+                    "monitor_setup_tinysa_win_driver_cmd",
+                    "https://github.com/erikkaashoek/TinySA",
+                ),
+                InstallStep(
+                    "python",
+                    "monitor_setup_tinysa_python_title",
+                    "monitor_setup_tinysa_python_detail",
+                    "monitor_setup_tinysa_python_cmd",
+                    "https://pypi.org/project/pyserial/",
+                ),
+            ),
+        },
+    ),
 )
 
 
 def get_device_spec(device_id: str) -> SdrDeviceSpec | None:
-    if device_id.startswith("airspy_hf"):
-        base = "airspy_hf"
-    elif device_id.startswith("airspy"):
-        base = "airspy"
-    elif device_id.startswith("hackrf"):
-        base = "hackrf"
-    else:
-        base = device_id
+    from core.rf.source_ids import device_family
+
+    base = device_family(device_id)
     for spec in SDR_DEVICE_CATALOG:
         if spec.device_id == base:
             return spec

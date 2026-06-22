@@ -8,6 +8,9 @@ ControladoRF usa un único motor de radio en `src/core/rf/`. Toda captura de esp
 |-----------|-----------|
 | [architecture.md](architecture.md) | Capas, módulos, flujo de un frame |
 | [hackrf.md](hackrf.md) | Límites reales HackRF One (IQ vs barrido) |
+| [analyzer_sources.md](analyzer_sources.md) | RF Explorer y TinySA (sweep-only) |
+| [rf_explorer.md](rf_explorer.md) | Driver UART RF Explorer |
+| [tinysa.md](tinysa.md) | Driver consola TinySA |
 | [policies.md](policies.md) | IQ/barrido, RBW, FFT, SWT, SUAV |
 | [controls.md](controls.md) | Controles LCD/menús y modo manual |
 | [gui_integration.md](gui_integration.md) | MonitorController, runner, demod |

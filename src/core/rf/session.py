@@ -45,15 +45,24 @@ class RfSession:
         self._last_analysis = None
         self._last_acquisition = None
         self._last_capture_ms = 0.0
+        self._attached_source_id: str = ""
+
+    @property
+    def attached_source_id(self) -> str:
+        return self._attached_source_id
 
     @property
     def device(self) -> RfDevice | None:
         return self._device
 
     def attach_source(self, source_id: str) -> None:
+        key = source_id or "mock"
+        if self._attached_source_id == key and self._device is not None:
+            return
         if self._device is not None and self._device.is_open:
             self._device.close()
-        self._device = create_device(source_id)
+        self._attached_source_id = key
+        self._device = create_device(key)
 
     def set_intent(self, intent: OperatorIntent) -> None:
         self._intent = intent

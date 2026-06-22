@@ -51,6 +51,7 @@ class MonitorDisplayPanel(QFrame):
         ("display_span_viewport_color", "monitor_display_span_viewport"),
         ("display_span_handle_color", "monitor_display_span_handle"),
         ("display_trace_color", "monitor_display_trace"),
+        ("display_trace_fill", "monitor_display_trace_fill"),
         ("display_sdr_trace_color", "monitor_display_sdr_trace"),
     )
 
@@ -170,11 +171,14 @@ class MonitorDisplayPanel(QFrame):
         self._ref_offset.valueChanged.connect(self._emit_patch)
         self._wf_auto = QCheckBox(tr("monitor_display_wf_auto"))
         self._wf_auto.toggled.connect(self._emit_patch)
+        self._trace_fill = QCheckBox(tr("monitor_display_trace_fill"))
+        self._trace_fill.toggled.connect(self._emit_patch)
         form.addRow(self._ref_auto)
         form.addRow(tr("monitor_display_ref_level"), self._ref_level)
         form.addRow(tr("monitor_display_ref_range"), self._ref_range)
         form.addRow(tr("monitor_display_ref_offset"), self._ref_offset)
         form.addRow(self._wf_auto)
+        form.addRow(self._trace_fill)
         layout.addWidget(edit_group)
         layout.addStretch(1)
 
@@ -191,6 +195,7 @@ class MonitorDisplayPanel(QFrame):
             self._ref_range.setCurrentIndex(ridx)
         self._ref_offset.setValue(float(self._params.ref_offset_db))
         self._wf_auto.setChecked(bool(self._params.waterfall_auto_levels))
+        self._trace_fill.setChecked(bool(self._params.display_trace_fill))
         self._refresh_color_buttons()
         self._refresh_matrix()
         self._loading = False
@@ -215,7 +220,11 @@ class MonitorDisplayPanel(QFrame):
         values = {
             "ref_scale_auto": tr("yes") if p.ref_scale_auto else tr("no"),
             "ampt_mode": p.ampt_mode,
-            "ref_level_dbm": f"{p.ref_level_dbm:.1f} dBm",
+            "ref_level_dbm": (
+                tr("monitor_ampt_auto")
+                if p.ref_scale_auto
+                else f"{p.ref_level_dbm:.1f} dBm"
+            ),
             "ref_range_db": f"{p.ref_range_db:.0f} dB",
             "ref_offset_db": f"{p.ref_offset_db:.1f} dB",
             "vertical_divisions": str(p.vertical_divisions),
@@ -228,6 +237,7 @@ class MonitorDisplayPanel(QFrame):
             "display_span_viewport_color": p.display_span_viewport_color.upper(),
             "display_span_handle_color": p.display_span_handle_color.upper(),
             "display_trace_color": p.display_trace_color.upper(),
+            "display_trace_fill": tr("yes") if p.display_trace_fill else tr("no"),
             "display_sdr_trace_color": p.display_sdr_trace_color.upper(),
         }
         for row, (key, label_key) in enumerate(self._MATRIX_ROWS):
@@ -278,6 +288,7 @@ class MonitorDisplayPanel(QFrame):
         updated.ref_range_db = float(self._ref_range.currentData() or updated.ref_range_db)
         updated.ref_offset_db = float(self._ref_offset.value())
         updated.waterfall_auto_levels = self._wf_auto.isChecked()
+        updated.display_trace_fill = self._trace_fill.isChecked()
         if updated.ref_scale_auto:
             updated.ampt_mode = "ref_level"
         self._emit(updated)

@@ -54,6 +54,7 @@ class MenuBar(QMenuBar):
         self._import_workbench_action: Optional[QAction] = None
         self._export_project_action: Optional[QAction] = None
         self._project_structure_action: Optional[QAction] = None
+        self._channelization_action: Optional[QAction] = None
         self._config_action: Optional[QAction] = None
         self._workspaces_action: Optional[QAction] = None
         self._exit_action: Optional[QAction] = None
@@ -128,6 +129,9 @@ class MenuBar(QMenuBar):
             get_app_icon("workspaces", ICON_SIZE_MENU), tr("workspaces")
         )
         self._tools_menu.addSeparator()
+        self._channelization_action = self._tools_menu.addAction(
+            get_app_icon("spectrum", ICON_SIZE_MENU), tr("tools_channelization")
+        )
         self._project_structure_action = self._tools_menu.addAction(
             get_app_icon("workspaces", ICON_SIZE_MENU), tr("tools_project_structure")
         )
@@ -216,6 +220,7 @@ class MenuBar(QMenuBar):
             self._exit_action: "exit",
             self._config_action: "settings",
             self._workspaces_action: "workspaces",
+            self._channelization_action: "spectrum",
             self._project_structure_action: "workspaces",
             self._help_manual_action: "about",
             self._help_supervision_action: "spectrum",
@@ -248,6 +253,9 @@ class MenuBar(QMenuBar):
 
     def get_project_structure_action(self) -> Optional[QAction]:
         return self._project_structure_action
+
+    def get_channelization_action(self) -> Optional[QAction]:
+        return self._channelization_action
 
     def get_export_project_action(self) -> Optional[QAction]:
         return self._export_project_action
@@ -315,6 +323,8 @@ class MenuBar(QMenuBar):
         self._export_project_action.setText(tr("project_export"))
         self._config_action.setText(tr("settings"))
         self._workspaces_action.setText(tr("workspaces"))
+        if self._channelization_action:
+            self._channelization_action.setText(tr("tools_channelization"))
         if self._project_structure_action:
             self._project_structure_action.setText(tr("tools_project_structure"))
         if self._help_manual_action:

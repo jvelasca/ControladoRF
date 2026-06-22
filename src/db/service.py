@@ -7,7 +7,15 @@ from .connection import Database
 from .exceptions import DatabaseError
 from .maintenance import DatabaseMaintenance
 from .migration import ensure_migrations
-from .repositories import ItemRepository, InventoryChannelRepository, InventoryScopeMetadataRepository, SupervisionEventRepository
+from core.rf.channelization_seed import ensure_channelization_seed
+from .repositories import (
+    ItemRepository,
+    InventoryChannelRepository,
+    InventoryScopeMetadataRepository,
+    RfChannelizationPrefsRepository,
+    RfStandardRepository,
+    SupervisionEventRepository,
+)
 from .settings import DatabaseSettings
 
 
@@ -25,6 +33,8 @@ class DatabaseService:
         self._inventory_channels = InventoryChannelRepository(self._db)
         self._inventory_scope_metadata = InventoryScopeMetadataRepository(self._db)
         self._supervision_events = SupervisionEventRepository(self._db)
+        self._rf_standards = RfStandardRepository(self._db)
+        self._rf_channelization_prefs = RfChannelizationPrefsRepository(self._db)
         self._logger = get_logger(__name__)
 
     @property
@@ -56,6 +66,14 @@ class DatabaseService:
         return self._supervision_events
 
     @property
+    def rf_standards(self) -> RfStandardRepository:
+        return self._rf_standards
+
+    @property
+    def rf_channelization_prefs(self) -> RfChannelizationPrefsRepository:
+        return self._rf_channelization_prefs
+
+    @property
     def data_dir(self) -> str:
         return self._data_dir
 
@@ -65,6 +83,7 @@ class DatabaseService:
 
     def startup(self) -> None:
         ensure_migrations(self._db)
+        ensure_channelization_seed(self._db)
         if self._settings.auto_backup_on_startup:
             try:
                 self._maintenance.backup(backup_dir=self._settings.resolved_backup_dir(self._data_dir))
@@ -81,6 +100,7 @@ class DatabaseService:
     def reconnect(self) -> None:
         self._db.reconfigure(self._settings.to_database_config(self._data_dir))
         ensure_migrations(self._db)
+        ensure_channelization_seed(self._db)
         self._logger.info("Base de datos reconectada con nueva configuración")
 
     def close(self) -> None:
