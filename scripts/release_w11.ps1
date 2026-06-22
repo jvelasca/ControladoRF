@@ -31,9 +31,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 Set-Location $Root
-. (Join-Path $Root "github_cli.ps1")
+. (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) "github_cli.ps1")
 
 function Get-ProjectVersion {
     $versionFile = Join-Path $Root "src\VERSION"
