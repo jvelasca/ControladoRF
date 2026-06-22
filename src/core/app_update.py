@@ -23,6 +23,16 @@ class UpdateInfo:
     html_url: str
 
 
+@dataclass(frozen=True)
+class UpdateCheckResult:
+    """Resultado de comprobar GitHub Releases (/releases/latest)."""
+
+    status: str  # available | current | error | disabled | not_packaged
+    info: Optional[UpdateInfo] = None
+    latest_published: str = ""
+    current_version: str = ""
+
+
 def _config_path() -> Path:
     return bundle_path("resources", "update_config.json")
 
@@ -95,19 +105,19 @@ def _pick_asset_url(release: dict[str, Any], suffixes: list[str]) -> str:
     return ""
 
 
-def check_for_update(*, timeout_sec: float = 12.0) -> Optional[UpdateInfo]:
-    """Consulta GitHub Releases. Devuelve None si no hay update o está deshabilitado."""
+def check_for_update(*, timeout_sec: float = 12.0) -> UpdateCheckResult:
+    """Consulta GitHub Releases (/releases/latest)."""
+    current = get_app_version()
     if not is_frozen():
-        return None
+        return UpdateCheckResult(status="not_packaged", current_version=current)
     config = load_update_config()
     if not config.get("enabled"):
-        return None
+        return UpdateCheckResult(status="disabled", current_version=current)
     owner = str(config.get("github_owner") or "").strip()
     repo = str(config.get("github_repo") or "").strip()
     if not owner or not repo or owner.startswith("TU_"):
-        return None
+        return UpdateCheckResult(status="disabled", current_version=current)
 
-    current = get_app_version()
     suffixes = _asset_suffixes(config)
     url = f"https://api.github.com/repos/{owner}/{repo}/releases/latest"
     request = urllib.request.Request(
@@ -121,21 +131,27 @@ def check_for_update(*, timeout_sec: float = 12.0) -> Optional[UpdateInfo]:
         with urllib.request.urlopen(request, timeout=timeout_sec) as response:
             payload = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
-        return None
+        return UpdateCheckResult(status="error", current_version=current)
 
     if not isinstance(payload, dict):
-        return None
+        return UpdateCheckResult(status="error", current_version=current)
     tag = str(payload.get("tag_name") or payload.get("name") or "").lstrip("vV")
-    if not tag or not is_newer_version(current, tag):
-        return None
+    if not tag:
+        return UpdateCheckResult(status="error", current_version=current)
+    if not is_newer_version(current, tag):
+        return UpdateCheckResult(
+            status="current",
+            current_version=current,
+            latest_published=tag,
+        )
 
     download_url = _pick_asset_url(payload, suffixes)
     html_url = str(payload.get("html_url") or "")
     if not download_url and not html_url:
-        return None
+        return UpdateCheckResult(status="error", current_version=current)
 
     notes = str(payload.get("body") or "").strip()
-    return UpdateInfo(
+    info = UpdateInfo(
         current_version=current,
         latest_version=tag,
         release_name=str(payload.get("name") or f"v{tag}"),
@@ -143,3 +159,4 @@ def check_for_update(*, timeout_sec: float = 12.0) -> Optional[UpdateInfo]:
         download_url=download_url,
         html_url=html_url,
     )
+    return UpdateCheckResult(status="available", info=info, current_version=current)

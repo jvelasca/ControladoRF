@@ -969,9 +969,7 @@ class MainWindow(QMainWindow, WorkspaceAware):
         dlg.exec()
 
     def check_for_updates(self, *, manual: bool = False) -> None:
-        from core.app_update import UpdateInfo, check_for_update, load_update_config
-        from gui.app_branding import get_app_version
-        from gui.app_update_dialog import AppUpdateDialog
+        from core.app_update import check_for_update, load_update_config
         from gui.app_update_worker import AppUpdateCheckWorker
 
         config = load_update_config()
@@ -979,7 +977,7 @@ class MainWindow(QMainWindow, WorkspaceAware):
             QMessageBox.information(
                 self,
                 tr("app_update_title"),
-                tr("app_update_error"),
+                tr("app_update_disabled"),
             )
             return
 
@@ -987,8 +985,7 @@ class MainWindow(QMainWindow, WorkspaceAware):
             return
 
         if manual:
-            info = check_for_update()
-            self._present_update_result(info, manual=True)
+            self._present_update_result(check_for_update(), manual=True)
             return
 
         self._update_worker = AppUpdateCheckWorker(self)
@@ -997,21 +994,39 @@ class MainWindow(QMainWindow, WorkspaceAware):
         )
         self._update_worker.start()
 
-    def _present_update_result(self, info, *, manual: bool) -> None:
-        from core.app_update import UpdateInfo
+    def _present_update_result(self, result, *, manual: bool) -> None:
+        from core.app_update import UpdateCheckResult
         from gui.app_branding import get_app_version
         from gui.app_update_dialog import AppUpdateDialog
 
         self._update_worker = None
-        if isinstance(info, UpdateInfo):
-            AppUpdateDialog(info, parent=self).exec()
+        if isinstance(result, UpdateCheckResult) and result.status == "available" and result.info:
+            AppUpdateDialog(result.info, parent=self).exec()
             return
-        if manual:
+        if not manual:
+            return
+        if isinstance(result, UpdateCheckResult) and result.status == "current":
             QMessageBox.information(
                 self,
                 tr("app_update_title"),
-                tr("app_update_none").format(version=get_app_version()),
+                tr("app_update_none").format(
+                    version=result.current_version or get_app_version(),
+                    latest=result.latest_published or result.current_version or get_app_version(),
+                ),
             )
+            return
+        if isinstance(result, UpdateCheckResult) and result.status == "not_packaged":
+            QMessageBox.information(
+                self,
+                tr("app_update_title"),
+                tr("app_update_dev_mode"),
+            )
+            return
+        QMessageBox.warning(
+            self,
+            tr("app_update_title"),
+            tr("app_update_error"),
+        )
 
     def schedule_startup_update_check(self) -> None:
         from core.app_update import load_update_config
